@@ -1,0 +1,55 @@
+# ai_text_detection_module.py
+
+import logging
+from transformers import AutoModelForSequenceClassification, AutoTokenizer, pipeline
+import torch
+
+# --- Logger Setup ---
+LOG_FILE_AID = "/home/ubuntu/bot_ai_text_detection.log"
+
+def setup_logger_aid(name, log_file, level=logging.INFO):
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(module)s - %(funcName)s - %(message)s")
+    file_handler = logging.FileHandler(log_file)
+    file_handler.setFormatter(formatter)
+    logger = logging.getLogger(name)
+    logger.setLevel(level)
+    if not logger.handlers:
+        logger.addHandler(file_handler)
+    return logger
+
+aid_logger = setup_logger_aid("AITextDetectionLogger", LOG_FILE_AID)
+
+class AITextDetector:
+    def __init__(self, model_name="AICodexLab/answerdotai-ModernBERT-base-ai-detector"):
+        self.logger = aid_logger
+        self.device = 0 if torch.cuda.is_available() else -1 # pipeline expects device as int (GPU index or -1 for CPU)
+        self.logger.info(f"Using device: {"GPU" if self.device == 0 else "CPU"}")
+        self.model_name = model_name
+        self.classifier = None
+        try:
+            # Load model and tokenizer using pipeline for simplicity
+            self.classifier = pipeline("text-classification", model=self.model_name, tokenizer=self.model_name, device=self.device)
+            self.logger.info(f"AITextDetector initialized with model: {self.model_name}")
+        except Exception as e:
+            self.logger.error(f"Failed to load AI text detection model or tokenizer {self.model_name}: {e}")
+            # self.classifier will remain None, handled in detect_text
+            raise
+
+    def detect_text(self, text):
+        """
+        Detects if the input text is AI-generated or human-written.
+        Args:
+            text (str): The text to analyze.
+        Returns:
+            dict: A dictionary containing the classification label and score, or an error message string.
+                  Example: {"label": "AI", "score": 0.98}
+                           {"label": "Human", "score": 0.75}
+        """
+        if not self.classifier:
+            self.logger.error("AI text detection classifier not initialized.")
+            return {"error": "AI text detection model not available."}
+
+        self.logger.info(f"Detecting AI text (first 100 chars): {text[:100]!r}...")
+        try:
+            result = self.classifier(text)
+            # The model returns a list of dictionaries, e.g., [{\
