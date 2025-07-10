@@ -111,4 +111,3 @@ if __name__ == "__main__":
 
     print(f"\nLog file for AI Text Detection: {LOG_FILE_AD}")
     print("Test finished.")
-
