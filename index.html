@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Self-Aware Assistant Bot</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#2563eb">
+    <meta name="msapplication-TileColor" content="#2563eb">
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="https://images.pexels.com/photos/8438918/pexels-photo-8438918.jpeg?auto=compress&cs=tinysrgb&w=180&h=180&fit=crop">
+    <link rel="apple-touch-icon" sizes="152x152" href="https://images.pexels.com/photos/8438918/pexels-photo-8438918.jpeg?auto=compress&cs=tinysrgb&w=152&h=152&fit=crop">
+    <link rel="apple-touch-icon" sizes="144x144" href="https://images.pexels.com/photos/8438918/pexels-photo-8438918.jpeg?auto=compress&cs=tinysrgb&w=144&h=144&fit=crop">
+    <link rel="apple-touch-icon" sizes="120x120" href="https://images.pexels.com/photos/8438918/pexels-photo-8438918.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&fit=crop">
+    <link rel="apple-touch-icon" sizes="114x114" href="https://images.pexels.com/photos/8438918/pexels-photo-8438918.jpeg?auto=compress&cs=tinysrgb&w=114&h=114&fit=crop">
+    <link rel="apple-touch-icon" sizes="76x76" href="https://images.pexels.com/photos/8438918/pexels-photo-8438918.jpeg?auto=compress&cs=tinysrgb&w=76&h=76&fit=crop">
+    <link rel="apple-touch-icon" sizes="72x72" href="https://images.pexels.com/photos/8438918/pexels-photo-8438918.jpeg?auto=compress&cs=tinysrgb&w=72&h=72&fit=crop">
+    <link rel="apple-touch-icon" sizes="60x60" href="https://images.pexels.com/photos/8438918/pexels-photo-8438918.jpeg?auto=compress&cs=tinysrgb&w=60&h=60&fit=crop">
+    <link rel="apple-touch-icon" sizes="57x57" href="https://images.pexels.com/photos/8438918/pexels-photo-8438918.jpeg?auto=compress&cs=tinysrgb&w=57&h=57&fit=crop">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="https://images.pexels.com/photos/8438918/pexels-photo-8438918.jpeg?auto=compress&cs=tinysrgb&w=32&h=32&fit=crop">
+    <link rel="icon" type="image/png" sizes="16x16" href="https://images.pexels.com/photos/8438918/pexels-photo-8438918.jpeg?auto=compress&cs=tinysrgb&w=16&h=16&fit=crop">
+    
+    <!-- Apple Mobile Web App Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="AI Bot">
+    
+    <!-- Microsoft App Meta Tags -->
+    <meta name="msapplication-TileImage" content="https://images.pexels.com/photos/8438918/pexels-photo-8438918.jpeg?auto=compress&cs=tinysrgb&w=144&h=144&fit=crop">
+    <meta name="msapplication-config" content="/browserconfig.xml">
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="A sophisticated AI-powered bot with self-awareness, self-healing, self-coding capabilities, text humanization, and AI text detection.">
+    <meta name="keywords" content="AI, bot, text humanization, AI detection, self-healing, automation">
+    <meta name="author" content="Self-Aware Assistant Bot">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Self-Aware Assistant Bot">
+    <meta property="og:description" content="A sophisticated AI-powered bot with self-awareness, self-healing, self-coding capabilities, text humanization, and AI text detection.">
+    <meta property="og:image" content="https://images.pexels.com/photos/8438918/pexels-photo-8438918.jpeg?auto=compress&cs=tinysrgb&w=512&h=512&fit=crop">
+    <meta property="og:url" content="https://yourdomainhere.com">
+    <meta property="og:type" content="website">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Self-Aware Assistant Bot">
+    <meta name="twitter:description" content="A sophisticated AI-powered bot with self-awareness, self-healing, self-coding capabilities, text humanization, and AI text detection.">
+    <meta name="twitter:image" content="https://images.pexels.com/photos/8438918/pexels-photo-8438918.jpeg?auto=compress&cs=tinysrgb&w=512&h=512&fit=crop">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            background: linear-gradient(45deg, #2563eb, #3b82f6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+        }
+
+        h1 {
+            color: #2563eb;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: #6b7280;
+            margin-bottom: 30px;
+            font-size: 1.2rem;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 40px 0;
+        }
+
+        .feature {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .feature:hover {
+            border-color: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.15);
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .feature h3 {
+            color: #2563eb;
+            margin-bottom: 8px;
+            font-size: 1.2rem;
+        }
+
+        .feature p {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        .install-prompt {
+            background: linear-gradient(45deg, #2563eb, #3b82f6);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 30px;
+        }
+
+        .install-button {
+            background: white;
+            color: #2563eb;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 15px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .install-button:hover {
+            background: #f1f5f9;
+            transform: translateY(-1px);
+        }
+
+        .install-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #installPrompt {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .features {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">🤖</div>
+        <h1>Self-Aware Assistant Bot</h1>
+        <p class="subtitle">Advanced AI with self-healing, coding, and text processing capabilities</p>
+
+        <div class="features">
+            <div class="feature">
+                <span class="feature-icon">🧠</span>
+                <h3>Self-Awareness</h3>
+                <p>Monitors system resources, uptime, and module health</p>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">🔧</span>
+                <h3>Self-Healing</h3>
+                <p>Automatically detects and recovers from errors</p>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">💻</span>
+                <h3>Self-Coding</h3>
+                <p>Analyzes, patches, and modifies code dynamically</p>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">📝</span>
+                <h3>Text Humanization</h3>
+                <p>Makes AI-generated text sound more natural</p>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">🤖</span>
+                <h3>AI Detection</h3>
+                <p>Identifies whether text was written by AI or humans</p>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">⚡</span>
+                <h3>Command Interface</h3>
+                <p>Easy-to-use command-line interface</p>
+            </div>
+        </div>
+
+        <div id="installPrompt" class="install-prompt">
+            <h3>📱 Install as App</h3>
+            <p>Get the full experience by installing this web app on your device!</p>
+            <button id="installButton" class="install-button">Install App</button>
+        </div>
+    </div>
+
+    <script>
+        // PWA Installation Logic
+        let deferredPrompt;
+        const installPrompt = document.getElementById('installPrompt');
+        const installButton = document.getElementById('installButton');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevent Chrome 67 and earlier from automatically showing the prompt
+            e.preventDefault();
+            // Stash the event so it can be triggered later
+            deferredPrompt = e;
+            // Show the install prompt
+            installPrompt.style.display = 'block';
+        });
+
+        installButton.addEventListener('click', async () => {
+            if (!deferredPrompt) {
+                return;
+            }
+            
+            // Show the install prompt
+            deferredPrompt.prompt();
+            
+            // Wait for the user to respond to the prompt
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`User response to the install prompt: ${outcome}`);
+            
+            // Clear the deferredPrompt
+            deferredPrompt = null;
+            
+            // Hide the install prompt
+            installPrompt.style.display = 'none';
+        });
+
+        // Handle successful installation
+        window.addEventListener('appinstalled', (evt) => {
+            console.log('App was installed successfully');
+            installPrompt.style.display = 'none';
+        });
+
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch(registrationError => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+
+        // PWA Status Check
+        function checkPWAStatus() {
+            const status = {
+                isInstalled: window.matchMedia('(display-mode: standalone)').matches,
+                isInstallable: deferredPrompt !== null,
+                hasServiceWorker: 'serviceWorker' in navigator,
+                isOnline: navigator.onLine
+            };
+            
+            console.log('PWA Status:', status);
+            return status;
+        }
+
+        // Check PWA status on load
+        window.addEventListener('load', () => {
+            setTimeout(checkPWAStatus, 1000);
+        });
+    </script>
+</body>
+</html>

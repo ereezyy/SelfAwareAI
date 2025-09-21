@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PWA Verification - Self-Aware Assistant Bot</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        
+        .verification-section {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .status.success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+        
+        .status.error {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+        
+        .status.warning {
+            background: #fef3c7;
+            color: #d97706;
+            border: 1px solid #fed7aa;
+        }
+        
+        .code-block {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.875rem;
+            margin: 16px 0;
+        }
+        
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .checklist li {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+        }
+        
+        .checklist li::before {
+            content: '✅';
+            margin-right: 8px;
+        }
+        
+        .checklist li.error::before {
+            content: '❌';
+        }
+        
+        .checklist li.warning::before {
+            content: '⚠️';
+        }
+        
+        h1, h2, h3 {
+            color: #2563eb;
+        }
+        
+        .highlight {
+            background: #fbbf24;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 PWA Implementation Verification</h1>
+    <p>This page helps you verify that your Progressive Web App is properly configured and installable.</p>
+
+    <div class="verification-section">
+        <h2>📋 PWA Checklist</h2>
+        <ul class="checklist" id="pwaChecklist">
+            <li id="manifestCheck">Manifest file linked and valid</li>
+            <li id="serviceWorkerCheck">Service Worker registered</li>
+            <li id="iconCheck">App icons present (multiple sizes)</li>
+            <li id="httpsCheck">Served over HTTPS (required for PWA)</li>
+            <li id="installableCheck">App is installable</li>
+            <li id="offlineCheck">Basic offline functionality</li>
+        </ul>
+    </div>
+
+    <div class="verification-section">
+        <h2>🎯 Manifest Validation</h2>
+        <div id="manifestValidation">
+            <p>Checking manifest.json...</p>
+        </div>
+    </div>
+
+    <div class="verification-section">
+        <h2>🔧 Service Worker Status</h2>
+        <div id="serviceWorkerStatus">
+            <p>Checking service worker registration...</p>
+        </div>
+    </div>
+
+    <div class="verification-section">
+        <h2>📱 Installation Status</h2>
+        <div id="installationStatus">
+            <p>Checking PWA installation capability...</p>
+        </div>
+    </div>
+
+    <div class="verification-section">
+        <h2>🌐 Browser Compatibility</h2>
+        <div id="browserCompatibility">
+            <p>Checking browser support...</p>
+        </div>
+    </div>
+
+    <div class="verification-section">
+        <h2>🛠️ Testing Tools</h2>
+        <p>Use these tools to further test your PWA:</p>
+        <ul>
+            <li><strong>Chrome DevTools:</strong> Application tab → Manifest & Service Workers sections</li>
+            <li><strong>Lighthouse:</strong> Run PWA audit in Chrome DevTools</li>
+            <li><strong>PWA Builder:</strong> <a href="https://www.pwabuilder.com/" target="_blank">pwabuilder.com</a></li>
+            <li><strong>Web App Manifest Validator:</strong> <a href="https://manifest-validator.appspot.com/" target="_blank">manifest-validator.appspot.com</a></li>
+        </ul>
+    </div>
+
+    <div class="verification-section">
+        <h2>📝 Implementation Code Examples</h2>
+        
+        <h3>HTML Head Section</h3>
+        <div class="code-block">
+&lt;!-- PWA Manifest --&gt;
+&lt;link rel="manifest" href="/manifest.json"&gt;
+
+&lt;!-- Theme Color --&gt;
+&lt;meta name="theme-color" content="#2563eb"&gt;
+
+&lt;!-- Apple Touch Icons --&gt;
+&lt;link rel="apple-touch-icon" sizes="180x180" href="/icon-180x180.png"&gt;
+&lt;meta name="apple-mobile-web-app-capable" content="yes"&gt;
+&lt;meta name="apple-mobile-web-app-status-bar-style" content="default"&gt;
+        </div>
+
+        <h3>Service Worker Registration</h3>
+        <div class="code-block">
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () =&gt; {
+    navigator.serviceWorker.register('/sw.js')
+      .then(registration =&gt; {
+        console.log('SW registered: ', registration);
+      })
+      .catch(registrationError =&gt; {
+        console.log('SW registration failed: ', registrationError);
+      });
+  });
+}
+        </div>
+
+        <h3>Install Prompt Handling</h3>
+        <div class="code-block">
+let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', (e) =&gt; {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Show install button
+});
+
+// When install button is clicked
+deferredPrompt.prompt();
+const { outcome } = await deferredPrompt.userChoice;
+        </div>
+    </div>
+
+    <script>
+        // PWA Verification Script
+        class PWAVerifier {
+            constructor() {
+                this.checks = {
+                    manifest: false,
+                    serviceWorker: false,
+                    icons: false,
+                    https: false,
+                    installable: false,
+                    offline: false
+                };
+                this.init();
+            }
+
+            async init() {
+                await this.checkAll();
+                this.updateUI();
+            }
+
+            async checkAll() {
+                await Promise.all([
+                    this.checkManifest(),
+                    this.checkServiceWorker(),
+                    this.checkIcons(),
+                    this.checkHTTPS(),
+                    this.checkInstallable(),
+                    this.checkOffline()
+                ]);
+            }
+
+            async checkManifest() {
+                try {
+                    const response = await fetch('/manifest.json');
+                    if (response.ok) {
+                        const manifest = await response.json();
+                        this.checks.manifest = true;
+                        this.displayManifestInfo(manifest);
+                    }
+                } catch (error) {
+                    console.error('Manifest check failed:', error);
+                    this.displayManifestError(error);
+                }
+            }
+
+            async checkServiceWorker() {
+                if ('serviceWorker' in navigator) {
+                    try {
+                        const registration = await navigator.serviceWorker.getRegistration();
+                        this.checks.serviceWorker = !!registration;
+                        this.displayServiceWorkerInfo(registration);
+                    } catch (error) {
+                        console.error('Service Worker check failed:', error);
+                        this.displayServiceWorkerError(error);
+                    }
+                } else {
+                    this.displayServiceWorkerError('Service Workers not supported');
+                }
+            }
+
+            checkIcons() {
+                const iconLinks = document.querySelectorAll('link[rel*="icon"], link[rel="apple-touch-icon"]');
+                this.checks.icons = iconLinks.length > 0;
+            }
+
+            checkHTTPS() {
+                this.checks.https = location.protocol === 'https:' || location.hostname === 'localhost';
+            }
+
+            checkInstallable() {
+                // This will be updated when beforeinstallprompt fires
+                this.checks.installable = false;
+                
+                window.addEventListener('beforeinstallprompt', () => {
+                    this.checks.installable = true;
+                    this.updateChecklistItem('installableCheck', true);
+                });
+
+                // Check if already installed
+                if (window.matchMedia('(display-mode: standalone)').matches) {
+                    this.displayInstallationInfo('App is currently running in standalone mode (installed)');
+                } else {
+                    this.displayInstallationInfo('App is running in browser mode (not installed)');
+                }
+            }
+
+            async checkOffline() {
+                if ('serviceWorker' in navigator) {
+                    try {
+                        const registration = await navigator.serviceWorker.getRegistration();
+                        this.checks.offline = !!registration && !!registration.active;
+                    } catch (error) {
+                        this.checks.offline = false;
+                    }
+                }
+            }
+
+            displayManifestInfo(manifest) {
+                const container = document.getElementById('manifestValidation');
+                const status = manifest ? 'success' : 'error';
+                container.innerHTML = `
+                    <div class="status ${status}">
+                        ${manifest ? '✅ Manifest loaded successfully' : '❌ Manifest not found or invalid'}
+                    </div>
+                    ${manifest ? `
+                        <div style="margin-top: 16px;">
+                            <strong>App Name:</strong> ${manifest.name || 'Not specified'}<br>
+                            <strong>Short Name:</strong> ${manifest.short_name || 'Not specified'}<br>
+                            <strong>Theme Color:</strong> ${manifest.theme_color || 'Not specified'}<br>
+                            <strong>Display Mode:</strong> ${manifest.display || 'Not specified'}<br>
+                            <strong>Icons:</strong> ${manifest.icons ? manifest.icons.length : 0} icons defined<br>
+                            <strong>Start URL:</strong> ${manifest.start_url || 'Not specified'}
+                        </div>
+                    ` : ''}
+                `;
+            }
+
+            displayManifestError(error) {
+                const container = document.getElementById('manifestValidation');
+                container.innerHTML = `
+                    <div class="status error">❌ Manifest check failed</div>
+                    <div style="margin-top: 16px;">
+                        <strong>Error:</strong> ${error.message || error}
+                    </div>
+                `;
+            }
+
+            displayServiceWorkerInfo(registration) {
+                const container = document.getElementById('serviceWorkerStatus');
+                const status = registration ? 'success' : 'error';
+                container.innerHTML = `
+                    <div class="status ${status}">
+                        ${registration ? '✅ Service Worker registered' : '❌ Service Worker not registered'}
+                    </div>
+                    ${registration ? `
+                        <div style="margin-top: 16px;">
+                            <strong>Scope:</strong> ${registration.scope}<br>
+                            <strong>State:</strong> ${registration.active ? registration.active.state : 'Not active'}<br>
+                            <strong>Update Found:</strong> ${registration.waiting ? 'Yes' : 'No'}
+                        </div>
+                    ` : ''}
+                `;
+            }
+
+            displayServiceWorkerError(error) {
+                const container = document.getElementById('serviceWorkerStatus');
+                container.innerHTML = `
+                    <div class="status error">❌ Service Worker unavailable</div>
+                    <div style="margin-top: 16px;">
+                        <strong>Error:</strong> ${error.message || error}
+                    </div>
+                `;
+            }
+
+            displayInstallationInfo(message) {
+                const container = document.getElementById('installationStatus');
+                container.innerHTML = `
+                    <div class="status ${this.checks.installable ? 'success' : 'warning'}">
+                        ${this.checks.installable ? '✅ App is installable' : '⚠️ Install prompt not available'}
+                    </div>
+                    <div style="margin-top: 16px;">
+                        <strong>Status:</strong> ${message}<br>
+                        <strong>Display Mode:</strong> ${window.matchMedia('(display-mode: standalone)').matches ? 'Standalone' : 'Browser'}<br>
+                        <strong>User Agent:</strong> ${navigator.userAgent.includes('Mobile') ? 'Mobile' : 'Desktop'}
+                    </div>
+                `;
+            }
+
+            updateChecklistItem(id, passed) {
+                const item = document.getElementById(id);
+                if (item) {
+                    item.className = passed ? '' : 'error';
+                }
+            }
+
+            updateUI() {
+                // Update checklist
+                this.updateChecklistItem('manifestCheck', this.checks.manifest);
+                this.updateChecklistItem('serviceWorkerCheck', this.checks.serviceWorker);
+                this.updateChecklistItem('iconCheck', this.checks.icons);
+                this.updateChecklistItem('httpsCheck', this.checks.https);
+                this.updateChecklistItem('installableCheck', this.checks.installable);
+                this.updateChecklistItem('offlineCheck', this.checks.offline);
+
+                // Update browser compatibility
+                this.displayBrowserCompatibility();
+            }
+
+            displayBrowserCompatibility() {
+                const container = document.getElementById('browserCompatibility');
+                const features = {
+                    'Service Workers': 'serviceWorker' in navigator,
+                    'Web App Manifest': 'getInstalledRelatedApps' in navigator,
+                    'Add to Home Screen': 'BeforeInstallPromptEvent' in window,
+                    'Push Notifications': 'PushManager' in window,
+                    'Background Sync': 'serviceWorker' in navigator && 'sync' in window.ServiceWorkerRegistration.prototype,
+                    'Web Share API': 'share' in navigator,
+                    'Payment Request': 'PaymentRequest' in window,
+                    'Credential Management': 'credentials' in navigator
+                };
+
+                const featureList = Object.entries(features).map(([feature, supported]) => 
+                    `<li class="${supported ? '' : 'warning'}">
+                        ${supported ? '✅' : '⚠️'} ${feature}
+                    </li>`
+                ).join('');
+
+                container.innerHTML = `
+                    <div style="margin-bottom: 16px;">
+                        <strong>Browser:</strong> ${navigator.userAgent}<br>
+                        <strong>Platform:</strong> ${navigator.platform}
+                    </div>
+                    <ul class="checklist">
+                        ${featureList}
+                    </ul>
+                `;
+            }
+        }
+
+        // Initialize PWA verification
+        document.addEventListener('DOMContentLoaded', () => {
+            new PWAVerifier();
+        });
+
+        // Additional check for network status
+        window.addEventListener('online', () => {
+            console.log('App is online');
+        });
+
+        window.addEventListener('offline', () => {
+            console.log('App is offline');
+        });
+    </script>
+</body>
+</html>
