@@ -27,7 +27,7 @@ pip install -r requirements.txt
 
 2. **Run the bot:**
 ```bash
-python3.11 bot_launcher.py
+python bot_launcher.py
 ```
 
 3. **Try some commands:**
