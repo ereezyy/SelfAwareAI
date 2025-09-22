@@ -4,9 +4,13 @@ import logging
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch.nn.functional as F # For softmax
+import os
 
 # --- Logger Setup ---
-LOG_FILE_AD = "/home/ubuntu/bot_ai_detection.log"
+# Create logs directory in current working directory for cross-platform compatibility
+LOGS_DIR = os.path.join(os.getcwd(), "logs")
+os.makedirs(LOGS_DIR, exist_ok=True)
+LOG_FILE_AD = os.path.join(LOGS_DIR, "bot_ai_detection.log")
 
 def setup_logger_ad(name, log_file, level=logging.INFO):
     formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(module)s - %(funcName)s - %(message)s")

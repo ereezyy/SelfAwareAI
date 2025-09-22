@@ -3,9 +3,13 @@
 import logging
 import torch
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+import os
 
 # --- Logger Setup ---
-LOG_FILE_TH = "/home/ubuntu/bot_text_humanization.log"
+# Create logs directory in current working directory for cross-platform compatibility
+LOGS_DIR = os.path.join(os.getcwd(), "logs")
+os.makedirs(LOGS_DIR, exist_ok=True)
+LOG_FILE_TH = os.path.join(LOGS_DIR, "bot_text_humanization.log")
 
 def setup_logger_th(name, log_file, level=logging.INFO):
     formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(module)s - %(funcName)s - %(message)s")

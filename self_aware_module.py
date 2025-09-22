@@ -7,7 +7,10 @@ import time
 import json
 
 # --- Logger Setup ---
-LOG_FILE_SA = "/home/ubuntu/bot_self_aware.log"
+# Create logs directory in current working directory for cross-platform compatibility
+LOGS_DIR = os.path.join(os.getcwd(), "logs")
+os.makedirs(LOGS_DIR, exist_ok=True)
+LOG_FILE_SA = os.path.join(LOGS_DIR, "bot_self_aware.log")
 
 def setup_logger_sa(name, log_file, level=logging.INFO):
     formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(module)s - %(funcName)s - %(message)s")

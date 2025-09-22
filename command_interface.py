@@ -15,7 +15,10 @@ from text_humanization_module import TextHumanizer
 from ai_text_detection_module import AITextDetector
 
 # --- Logger Setup ---
-LOG_FILE_CI = "/home/ubuntu/bot_command_interface.log"
+# Create logs directory in current working directory for cross-platform compatibility
+LOGS_DIR = os.path.join(os.getcwd(), "logs")
+os.makedirs(LOGS_DIR, exist_ok=True)
+LOG_FILE_CI = os.path.join(LOGS_DIR, "bot_command_interface.log")
 
 def setup_logger_ci(name, log_file, level=logging.INFO):
     formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(module)s - %(funcName)s - %(message)s")

@@ -15,8 +15,11 @@ from ai_text_detection_module import AITextDetector
 from command_interface import CommandInterface
 
 # --- Configuration ---
-CONFIG_FILE = "/home/ubuntu/bot_config.json"
-MAIN_LOG_FILE = "/home/ubuntu/bot_main.log"
+# Create logs directory in current working directory for cross-platform compatibility
+LOGS_DIR = os.path.join(os.getcwd(), "logs")
+os.makedirs(LOGS_DIR, exist_ok=True)
+CONFIG_FILE = os.path.join(os.getcwd(), "bot_config.json")
+MAIN_LOG_FILE = os.path.join(LOGS_DIR, "bot_main.log")
 
 def setup_main_logger():
     formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
