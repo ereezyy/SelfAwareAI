@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.11
 """
 WebSocket Server for Real-time Bot Management Communication
 Handles real-time updates between web interface and bot management system

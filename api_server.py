@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.11
 """
 Comprehensive Flask API server to bridge the web interface with the bot's Python modules.
 This server provides RESTful endpoints for all bot functionalities.

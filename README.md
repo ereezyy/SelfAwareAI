@@ -22,12 +22,12 @@ A sophisticated AI-powered bot with self-awareness, self-healing, self-coding ca
 
 1. **Install dependencies:**
 ```bash
-pip3 install -r requirements.txt
+pip install -r requirements.txt
 ```
 
 2. **Run the bot:**
 ```bash
-python3 bot_launcher.py
+python3.11 bot_launcher.py
 ```
 
 3. **Try some commands:**
@@ -134,7 +134,7 @@ The bot can be easily extended to run as a REST API using Flask/FastAPI for comm
 The bot includes self-monitoring and can report its health status:
 
 ```bash
-python3 bot_launcher.py --health-check
+python3.11 bot_launcher.py --health-check
 ```
 
 ## 📋 License

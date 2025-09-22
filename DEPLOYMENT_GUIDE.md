@@ -45,7 +45,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 EXPOSE 8000
-CMD ["python3", "api_server.py"]
+CMD ["python3.11", "api_server.py"]
 ```
 
 2. **Deploy to cloud:**
