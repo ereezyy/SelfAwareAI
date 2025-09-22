@@ -799,7 +799,7 @@ def _execute_bot_command(command, args):
                 return jsonify({
                     'success': False,
                     'result': 'Error: Bot modules not available. Please check if all dependencies are installed.'
-                }), 503
+                })
         
         # Build command string
         command_str = command
@@ -818,18 +818,6 @@ def _execute_bot_command(command, args):
         
         # Execute command
         result = bot_interface.process_command(command_str)
-        
-        # Broadcast command execution to WebSocket clients
-        if bot_event_loop:
-            asyncio.run_coroutine_threadsafe(
-                broadcast_to_websockets({
-                    'type': 'command_executed',
-                    'command': command_str,
-                    'result': result,
-                    'timestamp': datetime.now().isoformat()
-                }),
-                bot_event_loop
-            )
         
         return jsonify({
             'success': True,
