@@ -1023,6 +1023,117 @@
             showResult('healthResult', 'healthOutput', result);
         }
 
+        async function initializeModules() {
+            showLoading('statusResult', 'statusOutput');
+            const response = await fetch('/api/initialize', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await response.json();
+            const message = result.success ? result.message : result.error;
+            showResult('statusResult', 'statusOutput', message);
+        }
+
+        async function getHelp() {
+            showLoading('statusResult', 'statusOutput');
+            const result = await makeApiCall('/api/command', {
+                command: 'help',
+                args: []
+            });
+            showResult('statusResult', 'statusOutput', result);
+        }
+
+        // Command Interface Functions
+        let commandHistory = [];
+
+        function setCommand(command) {
+            document.getElementById('customCommand').value = command;
+        }
+
+        async function executeCustomCommand() {
+            const commandInput = document.getElementById('customCommand');
+            const command = commandInput.value.trim();
+            
+            if (!command) {
+                alert('Please enter a command');
+                return;
+            }
+            
+            // Add to history
+            commandHistory.unshift({
+                command: command,
+                timestamp: new Date().toLocaleTimeString()
+            });
+            
+            // Keep only last 20 commands
+            if (commandHistory.length > 20) {
+                commandHistory = commandHistory.slice(0, 20);
+            }
+            
+            updateCommandHistory();
+            
+            showLoading('commandResult', 'commandOutput');
+            
+            try {
+                // Parse command and args
+                const parts = command.split(/\s+/);
+                const cmd = parts[0];
+                const args = parts.slice(1);
+                
+                const result = await makeApiCall('/api/command', {
+                    command: cmd,
+                    args: args
+                });
+                
+                showResult('commandResult', 'commandOutput', result);
+                
+                // Clear input for next command
+                commandInput.value = '';
+                
+            } catch (error) {
+                showResult('commandResult', 'commandOutput', `Error: ${error.message}`);
+            }
+        }
+
+        function updateCommandHistory() {
+            const historyList = document.getElementById('historyList');
+            
+            if (commandHistory.length === 0) {
+                historyList.innerHTML = '<p style="color: #6b7280; margin: 0;">No commands executed yet...</p>';
+                return;
+            }
+            
+            const historyHtml = commandHistory.map(item => 
+                `<div style="margin-bottom: 4px; padding: 4px 0; border-bottom: 1px solid #e2e8f0;">
+                    <span style="color: #6b7280; font-size: 0.75rem;">[${item.timestamp}]</span>
+                    <span style="color: #374151; margin-left: 8px;">${item.command}</span>
+                </div>`
+            ).join('');
+            
+            historyList.innerHTML = historyHtml;
+        }
+
+        function clearCommandHistory() {
+            commandHistory = [];
+            updateCommandHistory();
+            const commandResult = document.getElementById('commandResult');
+            const commandOutput = document.getElementById('commandOutput');
+            commandResult.style.display = 'none';
+            commandOutput.textContent = '';
+        }
+
+        // Handle Enter key in command input
+        document.addEventListener('DOMContentLoaded', function() {
+            const commandInput = document.getElementById('customCommand');
+            if (commandInput) {
+                commandInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        executeCustomCommand();
+                    }
+                });
+            }
+        });
+
         // Real-time metrics updates
         function startMetricsUpdates() {
             // Update metrics every 30 seconds
