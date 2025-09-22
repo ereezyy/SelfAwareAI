@@ -30,16 +30,17 @@ try:
     from text_humanization_module import TextHumanizer
     from ai_text_detection_module import AITextDetector
     from command_interface import CommandInterface
-    from bot_management_system import DirectorBot, BotCommand, BotStatus, BotType
-    from bot_management_system import AnalyzerBot, GeneratorBot, MonitorBot, BotSwarm
-    from bot_management_system import get_director_bot
-    from bot_management_system import DirectorBot, BotCommand, BotStatus, BotType
-    from bot_management_system import AnalyzerBot, GeneratorBot, MonitorBot, BotSwarm
+    from bot_management_system import (
+        DirectorBot, BotCommand, BotStatus, BotType,
+        AnalyzerBot, GeneratorBot, MonitorBot, BotSwarm,
+        get_director_bot, websocket_handler
+    )
+    import datetime
     
     BOT_MODULES_AVAILABLE = True
     print("✅ All bot modules imported successfully")
 except ImportError as e:
-    logger.error(f"Failed to import bot modules: {e}")
+    print(f"⚠️  Failed to import bot modules: {e}")
     BOT_MODULES_AVAILABLE = False
 
 # Flask app configuration
@@ -80,7 +81,11 @@ def validate_json_request():
     if not request.is_json:
         return {'error': 'Content-Type must be application/json'}, 400
     
-    data = request.get_json()
+    try:
+        data = request.get_json()
+    except Exception as e:
+        return {'error': f'Invalid JSON format: {str(e)}'}, 400
+    
     if data is None:
         return {'error': 'Invalid JSON in request body'}, 400
     
@@ -88,11 +93,21 @@ def validate_json_request():
 
 def validate_required_fields(data, required_fields):
     """Validate that all required fields are present and not empty."""
+    if not isinstance(data, dict):
+        return "Request data must be a JSON object"
+    
     for field in required_fields:
         if field not in data:
             return f"Missing required field: {field}"
-        if not data[field] or (isinstance(data[field], str) and not data[field].strip()):
+        
+        value = data[field]
+        if value is None:
+            return f"Field '{field}' cannot be null"
+        if isinstance(value, str) and not value.strip():
             return f"Field '{field}' cannot be empty"
+        if isinstance(value, (list, dict)) and len(value) == 0:
+            return f"Field '{field}' cannot be empty"
+    
     return None
 
 async def broadcast_to_websockets(message):
@@ -117,6 +132,10 @@ async def broadcast_to_websockets(message):
 
 async def websocket_handler(websocket, path):
     """Handle WebSocket connections for real-time updates."""
+    if not BOT_MODULES_AVAILABLE:
+        logger.warning("WebSocket handler called but bot modules not available")
+        return
+    
     websocket_clients.add(websocket)
     logger.info(f"New WebSocket client connected. Total: {len(websocket_clients)}")
     
@@ -125,7 +144,8 @@ async def websocket_handler(websocket, path):
         initial_status = {
             'type': 'connection_established',
             'timestamp': datetime.now().isoformat(),
-            'client_count': len(websocket_clients)
+            'client_count': len(websocket_clients),
+            'modules_available': BOT_MODULES_AVAILABLE
         }
         await websocket.send(json_module.dumps(initial_status))
         
@@ -153,6 +173,10 @@ async def websocket_handler(websocket, path):
 def start_websocket_server():
     """Start WebSocket server in a separate thread."""
     global websocket_server
+    
+    if not BOT_MODULES_AVAILABLE:
+        logger.warning("Cannot start WebSocket server - bot modules not available")
+        return
     
     async def run_server():
         global websocket_server
@@ -191,19 +215,45 @@ async def initialize_director_bot():
             director_bot = get_director_bot()
             await director_bot.start()
             logger.info("✅ Director Bot initialized and started")
+            
+            # Broadcast initialization success
+            await broadcast_to_websockets({
+                'type': 'system_status',
+                'message': 'Director Bot initialized successfully',
+                'timestamp': datetime.now().isoformat()
+            })
             return True
     except Exception as e:
         logger.error(f"Failed to initialize Director Bot: {e}")
         director_bot = None
+        
+        # Broadcast initialization failure
+        try:
+            await broadcast_to_websockets({
+                'type': 'system_error',
+                'message': f'Director Bot initialization failed: {str(e)}',
+                'timestamp': datetime.now().isoformat()
+            })
+        except:
+            pass
+    
     return False
 
 def start_director_bot():
     """Start Director Bot in a separate thread."""
+    if not BOT_MODULES_AVAILABLE:
+        logger.warning("Cannot start Director Bot - bot modules not available")
+        return
+    
     def run_director():
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         try:
-            loop.run_until_complete(initialize_director_bot())
+            success = loop.run_until_complete(initialize_director_bot())
+            if success:
+                logger.info("✅ Director Bot thread running successfully")
+            else:
+                logger.error("❌ Director Bot initialization failed")
             # Keep the loop running for Director Bot operations
             loop.run_forever()
         except Exception as e:
@@ -219,7 +269,7 @@ def initialize_bot_modules():
     """Initialize all bot modules with comprehensive error handling."""
     global bot_interface, director_bot
     
-    if not MODULES_AVAILABLE:
+    if not BOT_MODULES_AVAILABLE:
         logger.warning("Bot modules not available - API will return error responses")
         return False
     
@@ -299,7 +349,10 @@ def health_check():
             'timestamp': datetime.now().isoformat(),
             'api_status': 'healthy',
             'modules_available': BOT_MODULES_AVAILABLE,
-            'bot_initialized': bot_interface is not None
+            'bot_initialized': bot_interface is not None,
+            'director_bot_available': director_bot is not None,
+            'websocket_server_running': websocket_server is not None,
+            'websocket_clients': len(websocket_clients)
         }
         
         if bot_interface:
@@ -312,6 +365,17 @@ def health_check():
                 health_status['bot_error'] = str(e)
         else:
             health_status['bot_status'] = 'not_initialized'
+        
+        # Check Director Bot status
+        if director_bot:
+            try:
+                health_status['director_status'] = 'healthy'
+                health_status['director_uptime'] = time.time() - director_bot.created_at if hasattr(director_bot, 'created_at') else 0
+            except Exception as e:
+                health_status['director_status'] = 'error'
+                health_status['director_error'] = str(e)
+        else:
+            health_status['director_status'] = 'not_initialized'
         
         return jsonify(health_status)
         
@@ -686,7 +750,9 @@ def websocket_info():
     return jsonify({
         'websocket_url': 'ws://localhost:8765',
         'connected_clients': len(websocket_clients),
-        'server_running': websocket_server is not None
+        'server_running': websocket_server is not None,
+        'modules_available': BOT_MODULES_AVAILABLE,
+        'director_bot_available': director_bot is not None
     })
 
 @app.route('/api/bots', methods=['GET'])
@@ -700,25 +766,28 @@ def list_all_bots():
             return jsonify({'error': 'Bot modules not available'}), 503
         
         # Create command to list bots
-        from bot_management_system import BotCommand
         command = BotCommand(
             command_id=str(uuid.uuid4()),
             command_type='list_bots'
         )
         
-        # Execute command synchronously (we'll need async support for better implementation)
-        import asyncio
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+        # Use a more robust async execution
+        result = execute_director_command_sync(command)
         
-        try:
-            result = loop.run_until_complete(director_bot.execute_command(command))
+        if result:
+            # Broadcast bot list update
+            asyncio.create_task(broadcast_to_websockets({
+                'type': 'bot_list_updated',
+                'data': result,
+                'timestamp': datetime.now().isoformat()
+            }))
+            
             return jsonify({
                 'success': True,
                 'data': result
             })
-        finally:
-            loop.close()
+        else:
+            return jsonify({'error': 'Failed to execute command'}), 500
             
     except Exception as e:
         logger.error(f"List bots failed: {e}")
@@ -987,18 +1056,48 @@ def get_bot_management_status():
 
 # Helper functions
 
+def execute_director_command_sync(command):
+    """Execute a Director Bot command synchronously."""
+    if not director_bot or not BOT_MODULES_AVAILABLE:
+        return None
+    
+    try:
+        # Create a new event loop for this thread if needed
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        
+        # Execute the command
+        if loop.is_running():
+            # If loop is already running, we need to use a different approach
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(asyncio.run, director_bot.execute_command(command))
+                return future.result(timeout=30)
+        else:
+            return loop.run_until_complete(director_bot.execute_command(command))
+            
+    except Exception as e:
+        logger.error(f"Director command execution failed: {e}")
+        return None
+
 def _process_command_request():
     """Process generic command requests."""
     try:
-        data = request.get_json()
-        if not data:
-            return jsonify({'error': 'No JSON data provided'}), 400
+        data, error = validate_json_request()
+        if error:
+            return jsonify(error[0]), error[1]
         
         command = data.get('command')
         args = data.get('args', [])
         
         if not command:
             return jsonify({'error': 'No command provided'}), 400
+        
+        if not isinstance(args, list):
+            return jsonify({'error': 'Args must be a list'}), 400
         
         return _execute_bot_command(command, args)
         
@@ -1019,6 +1118,19 @@ def _execute_bot_command(command, args):
                     'result': 'Error: Bot modules not available. Please check if all dependencies are installed.'
                 })
         
+        # Validate command and args
+        if not isinstance(command, str) or not command.strip():
+            return jsonify({
+                'success': False,
+                'error': 'Command must be a non-empty string'
+            }), 400
+        
+        if not isinstance(args, list):
+            return jsonify({
+                'success': False,
+                'error': 'Args must be a list'
+            }), 400
+        
         # Build command string
         command_str = command
         if args:
@@ -1038,12 +1150,15 @@ def _execute_bot_command(command, args):
         result = bot_interface.process_command(command_str)
         
         # Broadcast command execution event
-        asyncio.create_task(broadcast_to_websockets({
-            'type': 'command_executed',
-            'command': command_str,
-            'result': result[:200] + '...' if len(result) > 200 else result,
-            'timestamp': datetime.now().isoformat()
-        }))
+        try:
+            asyncio.create_task(broadcast_to_websockets({
+                'type': 'command_executed',
+                'command': command_str,
+                'result': result[:200] + '...' if len(str(result)) > 200 else result,
+                'timestamp': datetime.now().isoformat()
+            }))
+        except Exception as broadcast_error:
+            logger.warning(f"Failed to broadcast command execution: {broadcast_error}")
         
         return jsonify({
             'success': True,
@@ -1062,6 +1177,11 @@ def _execute_bot_command(command, args):
         }), 500
 
 # Error handlers
+
+@app.errorhandler(400)
+def bad_request(e):
+    """Handle bad request errors."""
+    return jsonify({'error': 'Bad request', 'message': str(e)}), 400
 
 @app.errorhandler(413)
 def too_large(e):
