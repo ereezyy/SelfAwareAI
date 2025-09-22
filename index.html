@@ -1255,6 +1255,7 @@
         function showLoading(buttonId) {
             const button = document.getElementById(buttonId);
             if (button) {
+                const button = document.querySelector(`button[onclick="restartService('${serviceName}')"]`);
                 button.innerHTML = '<span class="loading"></span>Processing...';
                 button.disabled = true;
             }
