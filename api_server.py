@@ -102,6 +102,23 @@ bot_interface = None
 backend_processes = {
     'websocket_server': None,
     'bot_management': None
+# WebSocket integration
+try:
+    import asyncio
+    import websockets
+    import threading
+    from websockets.server import serve
+    WEBSOCKET_INTEGRATION = True
+    logger.info("✅ WebSocket integration available")
+except ImportError as e:
+    logger.error(f"❌ WebSocket integration not available: {e}")
+    WEBSOCKET_INTEGRATION = False
+
+# Global WebSocket state
+websocket_clients = set()
+websocket_server = None
+websocket_thread = None
+
 }
 uploaded_files = {}  # Track uploaded files by session
 director_bot = None

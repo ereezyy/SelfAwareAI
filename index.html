@@ -490,6 +490,7 @@
         <div class="tabs">
             <button class="tab active" onclick="switchTab('text-processing')">📝 Text Processing</button>
             <button class="tab" onclick="switchTab('code-analysis')">💻 Code Analysis</button>
+            <button class="tab" onclick="switchTab('commands')">⚡ All Commands</button>
             <button class="tab" onclick="switchTab('bot-management')">🤖 Bot Management</button>
             <button class="tab" onclick="switchTab('system-status')">📊 System Status</button>
         </div>
@@ -606,8 +607,464 @@
             updateBackendStatus();
             // Update status every 10 seconds
             setInterval(updateBackendStatus, 10000);
+            
+            // Initialize WebSocket connection for real-time updates
+            initializeWebSocket();
+            
+            // Start system monitoring
+            startSystemMonitoring();
         });
 
+        // WebSocket Management
+        function initializeWebSocket() {
+            try {
+                websocket = new WebSocket('ws://localhost:8765');
+                
+                websocket.onopen = function() {
+                    updateConnectionStatus('ws', true);
+                    addTerminalMessage('[WebSocket]', '🟢 Connected to real-time server', 'success');
+                };
+                
+                websocket.onmessage = function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        handleWebSocketMessage(data);
+                    } catch (e) {
+                        console.error('Failed to parse WebSocket message:', e);
+                    }
+                };
+                
+                websocket.onclose = function() {
+                    updateConnectionStatus('ws', false);
+                    addTerminalMessage('[WebSocket]', '🔴 Disconnected from real-time server', 'error');
+                    
+                    // Attempt to reconnect after 5 seconds
+                    setTimeout(() => {
+                        if (!websocket || websocket.readyState === WebSocket.CLOSED) {
+                            addTerminalMessage('[System]', '🔄 Attempting to reconnect...', 'info');
+                            initializeWebSocket();
+                        }
+                    }, 5000);
+                };
+                
+                websocket.onerror = function(error) {
+                    addTerminalMessage('[WebSocket]', '❌ Connection error', 'error');
+                    updateConnectionStatus('ws', false);
+                };
+                
+            } catch (error) {
+                addTerminalMessage('[WebSocket]', '❌ Failed to initialize WebSocket connection', 'error');
+                updateConnectionStatus('ws', false);
+            }
+        }
+
+        function handleWebSocketMessage(data) {
+            switch(data.type) {
+                case 'status_update':
+                    updateSystemInfo(data);
+                    break;
+                case 'bot_event':
+                    addTerminalMessage('[Bot Event]', `${data.bot_id}: ${data.event}`, 'info');
+                    updateBotsList();
+                    break;
+                case 'command_result':
+                    displayCommandResult(data.result);
+                    break;
+                case 'initial_status':
+                    updateSystemInfo(data.data);
+                    break;
+                default:
+                    console.log('Unknown WebSocket message type:', data.type);
+            }
+        }
+
+        function updateConnectionStatus(type, connected) {
+            const statusMap = {
+                'ws': 'ws-status',
+                'api': 'api-connection',
+                'bot': 'bot-connection'
+            };
+            
+            const dotMap = {
+                'ws': 'ws-dot',
+                'api': 'api-dot',
+                'bot': 'bot-dot'
+            };
+            
+            const statusElement = document.getElementById(statusMap[type]);
+            const dotElement = document.getElementById(dotMap[type]);
+            
+            if (statusElement) {
+                statusElement.textContent = connected ? '🟢 Connected' : '🔴 Disconnected';
+            }
+            
+            if (dotElement) {
+                dotElement.textContent = connected ? '🟢' : '🔴';
+            }
+        }
+
+        // Command System
+        function handleCommandKeyPress(event) {
+            const input = document.getElementById('command-input');
+            
+            if (event.key === 'Enter') {
+                executeCommand();
+            } else if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                navigateHistory('up');
+            } else if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                navigateHistory('down');
+            } else if (event.key === 'Tab') {
+                event.preventDefault();
+                autoCompleteCommand();
+            }
+        }
+
+        function navigateHistory(direction) {
+            if (commandHistory.length === 0) return;
+            
+            if (direction === 'up') {
+                if (historyIndex < commandHistory.length - 1) {
+                    historyIndex++;
+                }
+            } else {
+                if (historyIndex > -1) {
+                    historyIndex--;
+                }
+            }
+            
+            const input = document.getElementById('command-input');
+            if (historyIndex >= 0) {
+                input.value = commandHistory[commandHistory.length - 1 - historyIndex];
+            } else {
+                input.value = '';
+            }
+        }
+
+        function autoCompleteCommand() {
+            const input = document.getElementById('command-input');
+            const currentValue = input.value.toLowerCase();
+            
+            const availableCommands = [
+                'help', 'status', 'list_bots', 'list_swarms', 'create_bot', 'create_swarm',
+                'start_bot', 'stop_bot', 'start_swarm', 'stop_swarm', 'get_status',
+                'force_health_check', 'system_optimize', 'recovery_history',
+                'humanize_text', 'detect_ai_text', 'analyze_code', 'generate_tests'
+            ];
+            
+            const matches = availableCommands.filter(cmd => cmd.startsWith(currentValue));
+            
+            if (matches.length === 1) {
+                input.value = matches[0];
+            } else if (matches.length > 1) {
+                addTerminalMessage('[System]', `Available: ${matches.join(', ')}`, 'info');
+            }
+        }
+
+        async function executeCommand() {
+            const input = document.getElementById('command-input');
+            const command = input.value.trim();
+            
+            if (!command) return;
+            
+            // Add to history
+            commandHistory.push(command);
+            historyIndex = -1;
+            
+            // Keep only last 50 commands
+            if (commandHistory.length > 50) {
+                commandHistory.shift();
+            }
+            
+            // Display command in terminal
+            addTerminalMessage('[User]', `> ${command}`, 'info');
+            addToRecentCommands(command);
+            
+            // Clear input
+            input.value = '';
+            
+            // Disable execute button
+            const executeBtn = document.querySelector('.btn-execute');
+            executeBtn.disabled = true;
+            executeBtn.textContent = 'Executing...';
+            
+            try {
+                let result;
+                
+                // Route command to appropriate handler
+                if (command.startsWith('humanize_text ')) {
+                    const text = command.substring('humanize_text '.length).replace(/^"|"$/g, '');
+                    result = await executeAPICommand('/api/humanize', { text });
+                } else if (command.startsWith('detect_ai_text ')) {
+                    const text = command.substring('detect_ai_text '.length).replace(/^"|"$/g, '');
+                    result = await executeAPICommand('/api/detect', { text });
+                } else if (command.startsWith('create_bot ')) {
+                    const parts = command.split(' ');
+                    const bot_type = parts[1] || 'custom';
+                    const name = parts.slice(2).join(' ') || `Bot_${Date.now()}`;
+                    result = await executeAPICommand('/api/create-bot', { bot_type, name });
+                } else if (command === 'list_bots') {
+                    result = await executeAPICommand('/api/list-bots', {}, 'GET');
+                } else if (command === 'status' || command === 'get_status') {
+                    result = await executeAPICommand('/api/bot/status', {}, 'GET');
+                } else {
+                    // Send via WebSocket for bot management commands
+                    if (websocket && websocket.readyState === WebSocket.OPEN) {
+                        const commandData = {
+                            command_id: `cmd_${Date.now()}`,
+                            command_type: command.split(' ')[0],
+                            parameters: parseCommandParameters(command)
+                        };
+                        
+                        websocket.send(JSON.stringify(commandData));
+                        addTerminalMessage('[System]', '⏳ Command sent to bot management system...', 'info');
+                    } else {
+                        throw new Error('WebSocket not connected. Cannot execute bot management commands.');
+                    }
+                }
+                
+                if (result) {
+                    displayCommandResult(result);
+                }
+                
+            } catch (error) {
+                addTerminalMessage('[Error]', `❌ ${error.message}`, 'error');
+            }
+            
+            // Re-enable execute button
+            executeBtn.disabled = false;
+            executeBtn.textContent = 'Execute';
+        }
+
+        function parseCommandParameters(command) {
+            const parts = command.split(' ');
+            const commandType = parts[0];
+            const params = {};
+            
+            switch (commandType) {
+                case 'create_bot':
+                    params.bot_type = parts[1] || 'custom';
+                    params.name = parts.slice(2).join(' ') || `Bot_${Date.now()}`;
+                    break;
+                case 'create_swarm':
+                    params.name = parts[1] || `Swarm_${Date.now()}`;
+                    params.template = parts[2] || 'code_analysis';
+                    break;
+                case 'start_bot':
+                case 'stop_bot':
+                    params.bot_id = parts[1];
+                    break;
+                case 'start_swarm':
+                case 'stop_swarm':
+                    params.swarm_id = parts[1];
+                    break;
+            }
+            
+            return params;
+        }
+
+        async function executeAPICommand(endpoint, data, method = 'POST') {
+            const options = {
+                method: method,
+                headers: { 'Content-Type': 'application/json' }
+            };
+            
+            if (method === 'POST' && data) {
+                options.body = JSON.stringify(data);
+            }
+            
+            const response = await fetch(endpoint, options);
+            return await response.json();
+        }
+
+        function executeQuickCommand(command) {
+            const input = document.getElementById('command-input');
+            input.value = command;
+            executeCommand();
+        }
+
+        function displayCommandResult(result) {
+            let message, messageType;
+            
+            if (result.success) {
+                messageType = 'success';
+                if (typeof result.result === 'object') {
+                    message = `✅ Success:\n${JSON.stringify(result.result, null, 2)}`;
+                } else {
+                    message = `✅ ${result.message || result.result || 'Command executed successfully'}`;
+                }
+            } else {
+                messageType = 'error';
+                message = `❌ Error: ${result.error || 'Command failed'}`;
+            }
+            
+            addTerminalMessage('[Result]', message, messageType);
+        }
+
+        // Terminal Management
+        function addTerminalMessage(source, message, type = 'info') {
+            const terminal = document.getElementById('terminal-output');
+            const timestamp = new Date().toLocaleTimeString();
+            
+            const line = document.createElement('div');
+            line.className = 'terminal-line';
+            
+            const timeSpan = document.createElement('span');
+            timeSpan.className = 'timestamp';
+            timeSpan.textContent = timestamp;
+            
+            const messageSpan = document.createElement('span');
+            messageSpan.className = `message ${type}`;
+            messageSpan.textContent = message;
+            
+            line.appendChild(timeSpan);
+            line.appendChild(messageSpan);
+            terminal.appendChild(line);
+            
+            // Auto-scroll if enabled
+            if (autoScroll) {
+                terminal.scrollTop = terminal.scrollHeight;
+            }
+            
+            // Limit terminal lines (keep last 1000)
+            const lines = terminal.querySelectorAll('.terminal-line');
+            if (lines.length > 1000) {
+                lines[0].remove();
+            }
+        }
+
+        function clearTerminal() {
+            const terminal = document.getElementById('terminal-output');
+            terminal.innerHTML = '';
+            addTerminalMessage('[System]', '🧹 Terminal cleared', 'info');
+        }
+
+        function toggleAutoScroll() {
+            autoScroll = !autoScroll;
+            showNotification(`Auto-scroll ${autoScroll ? 'enabled' : 'disabled'}`, 'info');
+        }
+
+        function exportLogs() {
+            const terminal = document.getElementById('terminal-output');
+            const logs = Array.from(terminal.querySelectorAll('.terminal-line')).map(line => {
+                const timestamp = line.querySelector('.timestamp').textContent;
+                const message = line.querySelector('.message').textContent;
+                return `${timestamp} ${message}`;
+            }).join('\n');
+            
+            const blob = new Blob([logs], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `bot-logs-${new Date().toISOString().slice(0, 19)}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showNotification('Logs exported successfully', 'success');
+        }
+
+        function addToRecentCommands(command) {
+            const list = document.getElementById('recent-commands-list');
+            const time = new Date().toLocaleTimeString().slice(0, 5);
+            
+            // Remove oldest if more than 5
+            const items = list.querySelectorAll('.command-history-item');
+            if (items.length >= 5) {
+                items[items.length - 1].remove();
+            }
+            
+            // Add new command at top
+            const item = document.createElement('div');
+            item.className = 'command-history-item';
+            item.innerHTML = `
+                <span class="cmd-time">${time}</span>
+                <span class="cmd-text">${command}</span>
+            `;
+            list.insertBefore(item, list.firstChild);
+        }
+
+        // System Monitoring
+        function startSystemMonitoring() {
+            // Update system info every 5 seconds
+            setInterval(updateLiveSystemInfo, 5000);
+            updateLiveSystemInfo(); // Initial update
+        }
+
+        async function updateLiveSystemInfo() {
+            try {
+                const response = await fetch('/api/bot/status');
+                const result = await response.json();
+                
+                if (result.success && result.status && result.status.system_metrics) {
+                    const metrics = result.status.system_metrics;
+                    
+                    // Update CPU
+                    const cpuProgress = document.getElementById('cpu-progress');
+                    const cpuText = document.getElementById('cpu-text');
+                    if (cpuProgress && cpuText) {
+                        cpuProgress.style.width = metrics.cpu_usage_percent + '%';
+                        cpuText.textContent = Math.round(metrics.cpu_usage_percent) + '%';
+                    }
+                    
+                    // Update Memory
+                    const memProgress = document.getElementById('memory-progress');
+                    const memText = document.getElementById('memory-text');
+                    if (memProgress && memText) {
+                        memProgress.style.width = metrics.memory_used_percent + '%';
+                        memText.textContent = Math.round(metrics.memory_used_percent) + '%';
+                    }
+                }
+                
+                updateConnectionStatus('api', true);
+            } catch (error) {
+                updateConnectionStatus('api', false);
+            }
+        }
+
+        function updateSystemInfo(data) {
+            // Update bot counts and other system info from WebSocket
+            if (data.bot_count !== undefined) {
+                // Update active bots display
+                updateBotsList();
+            }
+        }
+
+        async function updateBotsList() {
+            try {
+                const response = await fetch('/api/list-bots');
+                const result = await response.json();
+                
+                if (result.success) {
+                    const list = document.getElementById('active-bots-list');
+                    list.innerHTML = '';
+                    
+                    // Add Director Bot (always present)
+                    const directorItem = document.createElement('div');
+                    directorItem.className = 'bot-item';
+                    directorItem.innerHTML = `
+                        <span class="bot-status running">●</span>
+                        <span>Director Bot</span>
+                    `;
+                    list.appendChild(directorItem);
+                    
+                    // Add other bots
+                    if (result.bots && result.bots.length > 0) {
+                        result.bots.forEach(bot => {
+                            const item = document.createElement('div');
+                            item.className = 'bot-item';
+                            item.innerHTML = `
+                                <span class="bot-status ${bot.status === 'active' ? 'running' : 'stopped'}">●</span>
+                                <span>${bot.name}</span>
+                            `;
+                            list.appendChild(item);
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to update bots list:', error);
+            }
+        }
         // Backend Service Control Functions
         async function startService(service) {
             try {
