@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class BotWebSocketServer:
     """WebSocket server for bot management real-time communication"""
     
-    def __init__(self, host='localhost', port=8765):
+    def __init__(self, host='0.0.0.0', port=8765):
         self.host = host
         self.port = port
         self.server = None
