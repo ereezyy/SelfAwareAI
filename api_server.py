@@ -1,19 +1,24 @@
 #!/usr/bin/env python3
 """
-Simple Flask API server to bridge the web interface with the bot's Python modules.
+Comprehensive Flask API server to bridge the web interface with the bot's Python modules.
+This server provides RESTful endpoints for all bot functionalities.
 """
 
 import os
 import sys
 import json
 import logging
+import tempfile
+import uuid
+from datetime import datetime
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
+from werkzeug.utils import secure_filename
 
 # Add the current directory to Python path to import bot modules
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-# Import bot modules
+# Import bot modules with error handling
 try:
     from self_aware_module import SelfAwareModule
     from self_healing_coding_module import SelfHealingModule, SelfCodingModule
@@ -22,50 +27,79 @@ try:
     from command_interface import CommandInterface
     
     MODULES_AVAILABLE = True
+    print("✅ All bot modules imported successfully")
 except ImportError as e:
-    print(f"Warning: Could not import bot modules: {e}")
+    print(f"⚠️  Warning: Could not import bot modules: {e}")
     MODULES_AVAILABLE = False
 
+# Flask app configuration
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
-# Global variables for bot modules
+# Global variables
 bot_interface = None
+uploaded_files = {}  # Track uploaded files by session
+
+# Configuration
+UPLOAD_FOLDER = tempfile.gettempdir()
+ALLOWED_EXTENSIONS = {'.py', '.json', '.txt', '.md'}
+MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
+
+app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
+
+def allowed_file(filename):
+    """Check if file extension is allowed."""
+    return any(filename.lower().endswith(ext) for ext in ALLOWED_EXTENSIONS)
+
+def generate_session_id():
+    """Generate a unique session ID."""
+    return str(uuid.uuid4())
 
 def initialize_bot_modules():
-    """Initialize all bot modules."""
+    """Initialize all bot modules with comprehensive error handling."""
     global bot_interface
     
     if not MODULES_AVAILABLE:
-        logger.warning("Bot modules not available - using mock interface")
+        logger.warning("Bot modules not available - API will return error responses")
         return False
     
     try:
-        logger.info("Initializing bot modules...")
+        logger.info("🚀 Initializing bot modules...")
         
-        # Initialize modules
+        # Initialize core modules
         awareness_module = SelfAwareModule()
+        logger.info("✅ Self-Awareness module initialized")
+        
         healing_module = SelfHealingModule(awareness_module=awareness_module)
+        logger.info("✅ Self-Healing module initialized")
+        
         coding_module = SelfCodingModule(awareness_module=awareness_module)
+        logger.info("✅ Self-Coding module initialized")
         
-        # Try to initialize text processing modules (they might fail due to model downloads)
+        # Initialize text processing modules (may fail due to model requirements)
+        humanizer_module = None
+        ai_detector_module = None
+        
         try:
+            logger.info("📝 Loading text humanizer (this may take time for model download)...")
             humanizer_module = TextHumanizer()
-            logger.info("Text humanizer module initialized")
+            logger.info("✅ Text humanizer module initialized")
         except Exception as e:
-            logger.warning(f"Could not initialize text humanizer: {e}")
-            humanizer_module = None
+            logger.warning(f"⚠️  Could not initialize text humanizer: {e}")
         
         try:
+            logger.info("🤖 Loading AI detector (this may take time for model download)...")
             ai_detector_module = AITextDetector()
-            logger.info("AI detector module initialized")
+            logger.info("✅ AI detector module initialized")
         except Exception as e:
-            logger.warning(f"Could not initialize AI detector: {e}")
-            ai_detector_module = None
+            logger.warning(f"⚠️  Could not initialize AI detector: {e}")
         
         # Create command interface
         bot_interface = CommandInterface(
@@ -76,13 +110,14 @@ def initialize_bot_modules():
             ai_detector_module=ai_detector_module
         )
         
-        logger.info("Bot modules initialized successfully")
+        logger.info("🎉 Bot modules initialized successfully!")
         return True
         
     except Exception as e:
-        logger.error(f"Failed to initialize bot modules: {e}")
+        logger.error(f"❌ Failed to initialize bot modules: {e}")
         return False
 
+# Static file serving
 @app.route('/')
 def index():
     """Serve the main HTML page."""
@@ -91,13 +126,318 @@ def index():
 @app.route('/<path:filename>')
 def serve_static(filename):
     """Serve static files."""
-    return send_from_directory('.', filename)
+    try:
+        return send_from_directory('.', filename)
+    except FileNotFoundError:
+        return jsonify({'error': f'File {filename} not found'}), 404
+
+# API Routes
+
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    """Comprehensive health check endpoint."""
+    try:
+        health_status = {
+            'timestamp': datetime.now().isoformat(),
+            'api_status': 'healthy',
+            'modules_available': MODULES_AVAILABLE,
+            'bot_initialized': bot_interface is not None
+        }
+        
+        if bot_interface:
+            try:
+                bot_status = bot_interface.process_command('status')
+                health_status['bot_status'] = 'healthy'
+                health_status['bot_details'] = bot_status[:500] + '...' if len(bot_status) > 500 else bot_status
+            except Exception as e:
+                health_status['bot_status'] = 'error'
+                health_status['bot_error'] = str(e)
+        else:
+            health_status['bot_status'] = 'not_initialized'
+        
+        return jsonify(health_status)
+        
+    except Exception as e:
+        logger.error(f"Health check failed: {e}")
+        return jsonify({
+            'timestamp': datetime.now().isoformat(),
+            'api_status': 'unhealthy',
+            'error': str(e)
+        }), 500
+
+@app.route('/api/initialize', methods=['POST'])
+def initialize_modules():
+    """Force re-initialization of bot modules."""
+    try:
+        success = initialize_bot_modules()
+        return jsonify({
+            'success': success,
+            'message': 'Bot modules initialized successfully' if success else 'Failed to initialize bot modules',
+            'modules_available': MODULES_AVAILABLE,
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        logger.error(f"Initialization failed: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/upload', methods=['POST'])
+def upload_file():
+    """Handle file uploads with proper validation and storage."""
+    try:
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file provided'}), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+        
+        if not allowed_file(file.filename):
+            return jsonify({'error': f'File type not allowed. Allowed: {", ".join(ALLOWED_EXTENSIONS)}'}), 400
+        
+        # Generate secure filename and session ID
+        filename = secure_filename(file.filename)
+        session_id = generate_session_id()
+        filepath = os.path.join(UPLOAD_FOLDER, f"{session_id}_{filename}")
+        
+        # Save file
+        file.save(filepath)
+        
+        # Store file info in session
+        file_info = {
+            'original_name': filename,
+            'filepath': filepath,
+            'upload_time': datetime.now().isoformat(),
+            'size': os.path.getsize(filepath)
+        }
+        uploaded_files[session_id] = file_info
+        
+        logger.info(f"File uploaded: {filename} -> {filepath}")
+        return jsonify({
+            'success': True,
+            'session_id': session_id,
+            'filename': filename,
+            'message': f'File {filename} uploaded successfully',
+            'file_info': file_info
+        })
+        
+    except Exception as e:
+        logger.error(f"File upload failed: {e}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/command', methods=['POST'])
-def handle_command():
-    """Handle API commands from the web interface."""
-    global bot_interface
-    
+def handle_generic_command():
+    """Handle generic bot commands."""
+    return _process_command_request()
+
+@app.route('/api/analyze/structure', methods=['POST'])
+def analyze_code_structure():
+    """Analyze code structure of uploaded file."""
+    try:
+        data = request.get_json()
+        session_id = data.get('session_id')
+        
+        if not session_id or session_id not in uploaded_files:
+            return jsonify({'error': 'Invalid session ID or file not found'}), 400
+        
+        filepath = uploaded_files[session_id]['filepath']
+        return _execute_bot_command('analyze_code', [filepath])
+        
+    except Exception as e:
+        logger.error(f"Structure analysis failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/analyze/quality', methods=['POST'])
+def analyze_code_quality():
+    """Analyze code quality of uploaded file."""
+    try:
+        data = request.get_json()
+        session_id = data.get('session_id')
+        
+        if not session_id or session_id not in uploaded_files:
+            return jsonify({'error': 'Invalid session ID or file not found'}), 400
+        
+        filepath = uploaded_files[session_id]['filepath']
+        return _execute_bot_command('analyze_quality', [filepath])
+        
+    except Exception as e:
+        logger.error(f"Quality analysis failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/generate/code', methods=['POST'])
+def generate_code():
+    """Generate code using templates."""
+    try:
+        data = request.get_json()
+        code_type = data.get('code_type')
+        name = data.get('name')
+        params = data.get('params', {})
+        
+        if not code_type or not name:
+            return jsonify({'error': 'code_type and name are required'}), 400
+        
+        # Build arguments
+        args = [code_type, name]
+        for key, value in params.items():
+            args.extend([key, value])
+        
+        return _execute_bot_command('generate_code', args)
+        
+    except Exception as e:
+        logger.error(f"Code generation failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/generate/tests', methods=['POST'])
+def generate_tests():
+    """Generate unit tests for uploaded file."""
+    try:
+        data = request.get_json()
+        session_id = data.get('session_id')
+        
+        if not session_id or session_id not in uploaded_files:
+            return jsonify({'error': 'Invalid session ID or file not found'}), 400
+        
+        filepath = uploaded_files[session_id]['filepath']
+        return _execute_bot_command('generate_tests', [filepath])
+        
+    except Exception as e:
+        logger.error(f"Test generation failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/refactor', methods=['POST'])
+def refactor_code():
+    """Refactor code using various techniques."""
+    try:
+        data = request.get_json()
+        session_id = data.get('session_id')
+        refactor_type = data.get('refactor_type')
+        params = data.get('params', {})
+        
+        if not session_id or session_id not in uploaded_files:
+            return jsonify({'error': 'Invalid session ID or file not found'}), 400
+        
+        if not refactor_type:
+            return jsonify({'error': 'refactor_type is required'}), 400
+        
+        filepath = uploaded_files[session_id]['filepath']
+        
+        # Build arguments
+        args = [filepath, refactor_type]
+        for key, value in params.items():
+            args.extend([key, value])
+        
+        return _execute_bot_command('refactor_code', args)
+        
+    except Exception as e:
+        logger.error(f"Refactoring failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/autofix', methods=['POST'])
+def auto_fix_issues():
+    """Automatically fix common code issues."""
+    try:
+        data = request.get_json()
+        session_id = data.get('session_id')
+        
+        if not session_id or session_id not in uploaded_files:
+            return jsonify({'error': 'Invalid session ID or file not found'}), 400
+        
+        filepath = uploaded_files[session_id]['filepath']
+        return _execute_bot_command('auto_fix', [filepath])
+        
+    except Exception as e:
+        logger.error(f"Auto-fix failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/text/humanize', methods=['POST'])
+def humanize_text():
+    """Humanize text using AI."""
+    try:
+        data = request.get_json()
+        text = data.get('text')
+        
+        if not text:
+            return jsonify({'error': 'text is required'}), 400
+        
+        return _execute_bot_command('humanize_text', [text])
+        
+    except Exception as e:
+        logger.error(f"Text humanization failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/text/detect', methods=['POST'])
+def detect_ai_text():
+    """Detect if text is AI-generated."""
+    try:
+        data = request.get_json()
+        text = data.get('text')
+        
+        if not text:
+            return jsonify({'error': 'text is required'}), 400
+        
+        return _execute_bot_command('detect_ai_text', [text])
+        
+    except Exception as e:
+        logger.error(f"AI text detection failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/status', methods=['GET'])
+def get_system_status():
+    """Get comprehensive system status."""
+    return _execute_bot_command('status', [])
+
+@app.route('/api/files', methods=['GET'])
+def list_uploaded_files():
+    """List all uploaded files in current session."""
+    try:
+        files_info = {}
+        for session_id, file_info in uploaded_files.items():
+            files_info[session_id] = {
+                'filename': file_info['original_name'],
+                'upload_time': file_info['upload_time'],
+                'size': file_info['size']
+            }
+        
+        return jsonify({
+            'success': True,
+            'files': files_info,
+            'total_files': len(files_info)
+        })
+        
+    except Exception as e:
+        logger.error(f"File listing failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/files/<session_id>', methods=['DELETE'])
+def delete_uploaded_file(session_id):
+    """Delete an uploaded file."""
+    try:
+        if session_id not in uploaded_files:
+            return jsonify({'error': 'File not found'}), 404
+        
+        filepath = uploaded_files[session_id]['filepath']
+        
+        # Remove file from filesystem
+        if os.path.exists(filepath):
+            os.remove(filepath)
+        
+        # Remove from tracking
+        filename = uploaded_files[session_id]['original_name']
+        del uploaded_files[session_id]
+        
+        logger.info(f"File deleted: {filename}")
+        return jsonify({
+            'success': True,
+            'message': f'File {filename} deleted successfully'
+        })
+        
+    except Exception as e:
+        logger.error(f"File deletion failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# Helper functions
+
+def _process_command_request():
+    """Process generic command requests."""
     try:
         data = request.get_json()
         if not data:
@@ -109,82 +449,113 @@ def handle_command():
         if not command:
             return jsonify({'error': 'No command provided'}), 400
         
-        # If bot interface not initialized, try to initialize it
+        return _execute_bot_command(command, args)
+        
+    except Exception as e:
+        logger.error(f"Command processing failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+def _execute_bot_command(command, args):
+    """Execute a bot command with proper error handling."""
+    global bot_interface
+    
+    try:
+        # Initialize bot if not already done
         if bot_interface is None:
             if not initialize_bot_modules():
                 return jsonify({
+                    'success': False,
                     'result': 'Error: Bot modules not available. Please check if all dependencies are installed.'
                 })
         
         # Build command string
         command_str = command
         if args:
-            # Properly escape arguments that might contain spaces
+            # Properly escape arguments
             escaped_args = []
             for arg in args:
-                if ' ' in str(arg) or '"' in str(arg):
-                    escaped_args.append(f'"{str(arg).replace('"', '\\"')}"')
+                arg_str = str(arg)
+                if ' ' in arg_str or '"' in arg_str or "'" in arg_str:
+                    escaped_args.append(f'"{arg_str.replace('"', '\\"')}"')
                 else:
-                    escaped_args.append(str(arg))
+                    escaped_args.append(arg_str)
             command_str += ' ' + ' '.join(escaped_args)
         
-        logger.info(f"Processing command: {command_str}")
+        logger.info(f"Executing command: {command_str}")
         
-        # Process the command
+        # Execute command
         result = bot_interface.process_command(command_str)
         
-        return jsonify({'result': result})
+        return jsonify({
+            'success': True,
+            'result': result,
+            'command': command_str,
+            'timestamp': datetime.now().isoformat()
+        })
         
     except Exception as e:
-        logger.error(f"Error processing command: {e}")
-        return jsonify({'error': str(e)}), 500
+        logger.error(f"Command execution failed: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'command': command,
+            'timestamp': datetime.now().isoformat()
+        }), 500
 
-@app.route('/api/health', methods=['GET'])
-def health_check():
-    """Health check endpoint."""
-    try:
-        if bot_interface is None:
-            return jsonify({'status': 'Bot modules not initialized'}), 503
-        
-        # Try to get status from bot
-        result = bot_interface.process_command('status')
-        return jsonify({'status': 'healthy', 'bot_status': result})
-        
-    except Exception as e:
-        logger.error(f"Health check failed: {e}")
-        return jsonify({'status': 'unhealthy', 'error': str(e)}), 500
+# Error handlers
 
-@app.route('/api/upload', methods=['POST'])
-def handle_file_upload():
-    """Handle file uploads from the web interface."""
-    try:
-        if 'file' not in request.files:
-            return jsonify({'error': 'No file provided'}), 400
-        
-        file = request.files['file']
-        if file.filename == '':
-            return jsonify({'error': 'No file selected'}), 400
-        
-        # Save the file temporarily
-        filename = file.filename
-        filepath = os.path.join('/tmp', filename)
-        file.save(filepath)
-        
-        logger.info(f"File uploaded: {filename}")
-        return jsonify({'message': f'File {filename} uploaded successfully', 'filepath': filepath})
-        
-    except Exception as e:
-        logger.error(f"File upload failed: {e}")
-        return jsonify({'error': str(e)}), 500
+@app.errorhandler(413)
+def too_large(e):
+    """Handle file too large errors."""
+    return jsonify({'error': 'File too large. Maximum size is 16MB.'}), 413
+
+@app.errorhandler(404)
+def not_found(e):
+    """Handle 404 errors."""
+    return jsonify({'error': 'Endpoint not found'}), 404
+
+@app.errorhandler(500)
+def internal_error(e):
+    """Handle internal server errors."""
+    logger.error(f"Internal server error: {e}")
+    return jsonify({'error': 'Internal server error'}), 500
+
+# Cleanup on shutdown
+import atexit
+
+def cleanup_uploaded_files():
+    """Clean up uploaded files on server shutdown."""
+    logger.info("Cleaning up uploaded files...")
+    for session_id, file_info in uploaded_files.items():
+        filepath = file_info['filepath']
+        try:
+            if os.path.exists(filepath):
+                os.remove(filepath)
+                logger.info(f"Cleaned up: {file_info['original_name']}")
+        except Exception as e:
+            logger.error(f"Failed to clean up {filepath}: {e}")
+
+atexit.register(cleanup_uploaded_files)
 
 if __name__ == '__main__':
+    print("🚀 Starting AI Bot API Server...")
+    print("=" * 50)
+    
     # Initialize bot modules on startup
-    if initialize_bot_modules():
-        logger.info("Bot modules initialized successfully")
+    initialization_success = initialize_bot_modules()
+    
+    if initialization_success:
+        print("✅ Bot modules initialized successfully")
     else:
-        logger.warning("Running with limited functionality - bot modules not available")
+        print("⚠️  Running with limited functionality - some bot modules not available")
+    
+    print("=" * 50)
     
     # Run the Flask app
     port = int(os.environ.get('PORT', 3000))
-    logger.info(f"Starting API server on port {port}")
-    app.run(host='0.0.0.0', port=port, debug=True)
+    print(f"🌐 API server starting on http://localhost:{port}")
+    print(f"📊 Health check: http://localhost:{port}/api/health")
+    print(f"🎯 API endpoints available at /api/*")
+    print("=" * 50)
+    
+    app.run(host='0.0.0.0', port=port, debug=True, threaded=True)

@@ -693,25 +693,22 @@
         }
 
         // Backend API functions
-        async function makeApiCall(command, args = []) {
+        async function makeApiCall(endpoint, data = {}) {
             try {
-                const response = await fetch('/api/command', {
+                const response = await fetch(endpoint, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        command: command,
-                        args: args
-                    })
+                    body: JSON.stringify(data)
                 });
                 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 
-                const data = await response.json();
-                return data.result;
+                const result = await response.json();
+                return result.success ? result.result : result.error || 'Unknown error';
             } catch (error) {
                 console.error('API call failed:', error);
                 return `Error: ${error.message}`;
@@ -721,7 +718,8 @@
         // Check if backend is running
         async function checkBackendStatus() {
             try {
-                const result = await makeApiCall('status');
+                const response = await fetch('/api/health');
+                const result = await response.json();
                 document.getElementById('statusText').textContent = 'Connected';
                 document.querySelector('#statusIndicator .status-indicator').className = 'status-indicator status-ok';
             } catch (error) {
@@ -733,23 +731,57 @@
         // File handling
         let selectedAnalyzeFile = null;
         let selectedRefactorFile = null;
+        let currentSessionId = null;
 
         function handleFileSelect(input) {
             const file = input.files[0];
             if (file) {
-                selectedAnalyzeFile = file;
-                document.getElementById('analyzeFileText').textContent = `📄 ${file.name}`;
+                uploadFile(file, 'analyze');
             }
         }
 
         function handleRefactorFileSelect(input) {
             const file = input.files[0];
             if (file) {
-                selectedRefactorFile = file;
-                document.getElementById('refactorFileText').textContent = `📄 ${file.name}`;
+                uploadFile(file, 'refactor');
             }
         }
 
+        async function uploadFile(file, type) {
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Upload failed: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    if (type === 'analyze') {
+                        selectedAnalyzeFile = file;
+                        currentSessionId = result.session_id;
+                        document.getElementById('analyzeFileText').textContent = `📄 ${file.name} (uploaded)`;
+                    } else if (type === 'refactor') {
+                        selectedRefactorFile = file;
+                        currentSessionId = result.session_id;
+                        document.getElementById('refactorFileText').textContent = `📄 ${file.name} (uploaded)`;
+                    }
+                    console.log('File uploaded successfully:', result);
+                } else {
+                    throw new Error(result.error || 'Upload failed');
+                }
+            } catch (error) {
+                console.error('File upload error:', error);
+                alert(`File upload failed: ${error.message}`);
+            }
+        }
         // Drag and drop functionality
         function setupDragAndDrop() {
             const fileUpload = document.querySelector('.file-upload');
@@ -769,43 +801,48 @@
                 
                 const files = e.dataTransfer.files;
                 if (files.length > 0 && files[0].name.endsWith('.py')) {
-                    selectedAnalyzeFile = files[0];
-                    document.getElementById('analyzeFileText').textContent = `📄 ${files[0].name}`;
+                    uploadFile(files[0], 'analyze');
                 }
             });
         }
 
         // API Functions for each feature
         async function analyzeCodeStructure() {
-            if (!selectedAnalyzeFile) {
+            if (!currentSessionId) {
                 alert('Please select a Python file first');
                 return;
             }
             
             showLoading('analysisResult', 'analysisOutput');
-            const result = await makeApiCall('analyze_code', [selectedAnalyzeFile.name]);
+            const result = await makeApiCall('/api/analyze/structure', {
+                session_id: currentSessionId
+            });
             showResult('analysisResult', 'analysisOutput', result);
         }
 
         async function analyzeCodeQuality() {
-            if (!selectedAnalyzeFile) {
+            if (!currentSessionId) {
                 alert('Please select a Python file first');
                 return;
             }
             
             showLoading('analysisResult', 'analysisOutput');
-            const result = await makeApiCall('analyze_quality', [selectedAnalyzeFile.name]);
+            const result = await makeApiCall('/api/analyze/quality', {
+                session_id: currentSessionId
+            });
             showResult('analysisResult', 'analysisOutput', result);
         }
 
         async function autoFixIssues() {
-            if (!selectedAnalyzeFile) {
+            if (!currentSessionId) {
                 alert('Please select a Python file first');
                 return;
             }
             
             showLoading('analysisResult', 'analysisOutput');
-            const result = await makeApiCall('auto_fix', [selectedAnalyzeFile.name]);
+            const result = await makeApiCall('/api/autofix', {
+                session_id: currentSessionId
+            });
             showResult('analysisResult', 'analysisOutput', result);
         }
 
@@ -814,14 +851,11 @@
             const className = document.getElementById('className').value;
             const additionalParams = document.getElementById('additionalParams').value;
             
-            let args = ['generate_code', codeType, className];
+            let params = {};
             
             if (additionalParams.trim()) {
                 try {
-                    const params = JSON.parse(additionalParams);
-                    for (const [key, value] of Object.entries(params)) {
-                        args.push(key, value);
-                    }
+                    params = JSON.parse(additionalParams);
                 } catch (e) {
                     alert('Invalid JSON in additional parameters');
                     return;
@@ -829,29 +863,35 @@
             }
             
             showLoading('generationResult', 'generationOutput');
-            const result = await makeApiCall('generate_code', args.slice(1));
+            const result = await makeApiCall('/api/generate/code', {
+                code_type: codeType,
+                name: className,
+                params: params
+            });
             showResult('generationResult', 'generationOutput', result);
         }
 
         async function generateTests() {
-            if (!selectedAnalyzeFile) {
+            if (!currentSessionId) {
                 alert('Please select a Python file first');
                 return;
             }
             
             showLoading('generationResult', 'generationOutput');
-            const result = await makeApiCall('generate_tests', [selectedAnalyzeFile.name]);
+            const result = await makeApiCall('/api/generate/tests', {
+                session_id: currentSessionId
+            });
             showResult('generationResult', 'generationOutput', result);
         }
 
         async function refactorCode() {
-            if (!selectedRefactorFile) {
+            if (!currentSessionId) {
                 alert('Please select a Python file first');
                 return;
             }
             
             const refactorType = document.getElementById('refactorType').value;
-            let args = [selectedRefactorFile.name, refactorType];
+            let params = {};
             
             if (refactorType === 'rename_variable') {
                 const oldName = document.getElementById('oldName').value;
@@ -860,11 +900,16 @@
                     alert('Please provide both old and new variable names');
                     return;
                 }
-                args.push('old_name', oldName, 'new_name', newName);
+                params.old_name = oldName;
+                params.new_name = newName;
             }
             
             showLoading('refactorResult', 'refactorOutput');
-            const result = await makeApiCall('refactor_code', args);
+            const result = await makeApiCall('/api/refactor', {
+                session_id: currentSessionId,
+                refactor_type: refactorType,
+                params: params
+            });
             showResult('refactorResult', 'refactorOutput', result);
         }
 
@@ -881,7 +926,9 @@
             }
             
             showLoading('humanizeResult', 'humanizeOutput');
-            const result = await makeApiCall('humanize_text', [text]);
+            const result = await makeApiCall('/api/text/humanize', {
+                text: text
+            });
             showResult('humanizeResult', 'humanizeOutput', result);
         }
 
@@ -893,13 +940,17 @@
             }
             
             showLoading('detectResult', 'detectOutput');
-            const result = await makeApiCall('detect_ai_text', [text]);
+            const result = await makeApiCall('/api/text/detect', {
+                text: text
+            });
             showResult('detectResult', 'detectOutput', result);
         }
 
         async function getSystemStatus() {
             showLoading('statusResult', 'statusOutput');
-            const result = await makeApiCall('status');
+            const response = await fetch('/api/status');
+            const result = await response.json();
+            const statusText = result.success ? result.result : result.error;
             showResult('statusResult', 'statusOutput', result);
         }
 
