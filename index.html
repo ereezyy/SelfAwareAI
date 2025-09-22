@@ -675,7 +675,6 @@
         window.addEventListener('load', () => {
             setTimeout(checkPWAStatus, 1000);
             checkBackendStatus();
-            initializeBotManager();
         });
 
         // Tab switching functionality
@@ -787,6 +786,461 @@
                 alert(`File upload failed: ${error.message}`);
             }
         }
+
+        // =====================================
+        // BOT MANAGEMENT SYSTEM
+        // =====================================
+        
+        let websocketConnection = null;
+        let botListData = [];
+        let swarmListData = [];
+        
+        function initializeBotManager() {
+            setTimeout(() => {
+                refreshDirectorStatus();
+                refreshBotList();
+                refreshSwarmList();
+            }, 2000);
+        }
+        
+        async function refreshDirectorStatus() {
+            try {
+                const response = await fetch('/api/bot-status');
+                const result = await response.json();
+                
+                if (result.success && result.data.result) {
+                    const directorData = result.data.result.director;
+                    document.getElementById('directorStatusText').textContent = directorData.status || 'Unknown';
+                    document.getElementById('directorUptime').textContent = formatUptime(directorData.uptime || 0);
+                    document.getElementById('directorCommands').textContent = directorData.metrics?.commands_executed || 0;
+                } else {
+                    document.getElementById('directorStatusText').textContent = 'Offline';
+                    document.getElementById('directorUptime').textContent = '-';
+                    document.getElementById('directorCommands').textContent = '-';
+                }
+            } catch (error) {
+                console.error('Director status refresh failed:', error);
+                document.getElementById('directorStatusText').textContent = 'Error';
+            }
+        }
+        
+        async function createNewBot() {
+            const botType = document.getElementById('newBotType').value;
+            const botName = document.getElementById('newBotName').value.trim();
+            
+            if (!botName) {
+                alert('Please enter a bot name');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/bots', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        bot_type: botType,
+                        name: botName
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    logActivity(`✅ Created ${botType} bot: ${botName}`);
+                    document.getElementById('newBotName').value = '';
+                    setTimeout(refreshBotList, 500);
+                } else {
+                    logActivity(`❌ Failed to create bot: ${result.error}`);
+                }
+            } catch (error) {
+                logActivity(`❌ Error creating bot: ${error.message}`);
+            }
+        }
+        
+        async function refreshBotList() {
+            try {
+                const response = await fetch('/api/bots');
+                const result = await response.json();
+                
+                if (result.success && result.data.result) {
+                    botListData = result.data.result.bots || [];
+                    updateBotListDisplay();
+                } else {
+                    document.getElementById('botList').innerHTML = '<div style="color: #ef4444; text-align: center; padding: 20px;">Failed to load bot list</div>';
+                }
+            } catch (error) {
+                console.error('Bot list refresh failed:', error);
+                document.getElementById('botList').innerHTML = '<div style="color: #ef4444; text-align: center; padding: 20px;">Error loading bots</div>';
+            }
+        }
+        
+        function updateBotListDisplay() {
+            const container = document.getElementById('botList');
+            
+            if (botListData.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #6b7280; padding: 20px;">No bots created yet</div>';
+                return;
+            }
+            
+            const botsHtml = botListData.map(bot => {
+                const statusColor = {
+                    'active': '#10b981',
+                    'idle': '#3b82f6', 
+                    'error': '#ef4444',
+                    'stopped': '#6b7280'
+                }[bot.status] || '#6b7280';
+                
+                return `
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 8px;">
+                        <div>
+                            <span style="font-weight: 600;">${bot.name}</span>
+                            <span style="color: #6b7280; margin-left: 8px;">(${bot.type})</span>
+                            <br>
+                            <span style="color: ${statusColor}; font-size: 0.875rem;">● ${bot.status}</span>
+                            <span style="color: #6b7280; margin-left: 8px; font-size: 0.875rem;">Uptime: ${formatUptime(bot.uptime)}</span>
+                        </div>
+                        <div>
+                            <button class="btn" style="padding: 4px 8px; margin: 2px;" onclick="startBot('${bot.bot_id}', '${bot.name}')">▶️</button>
+                            <button class="btn btn-secondary" style="padding: 4px 8px; margin: 2px;" onclick="stopBot('${bot.bot_id}', '${bot.name}')">⏹️</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = botsHtml;
+        }
+        
+        async function startBot(botId, botName) {
+            try {
+                const response = await fetch(`/api/bots/${botId}/start`, {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    logActivity(`🚀 Started bot: ${botName}`);
+                    setTimeout(refreshBotList, 500);
+                } else {
+                    logActivity(`❌ Failed to start bot ${botName}: ${result.error}`);
+                }
+            } catch (error) {
+                logActivity(`❌ Error starting bot ${botName}: ${error.message}`);
+            }
+        }
+        
+        async function stopBot(botId, botName) {
+            try {
+                const response = await fetch(`/api/bots/${botId}/stop`, {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    logActivity(`⏹️ Stopped bot: ${botName}`);
+                    setTimeout(refreshBotList, 500);
+                } else {
+                    logActivity(`❌ Failed to stop bot ${botName}: ${result.error}`);
+                }
+            } catch (error) {
+                logActivity(`❌ Error stopping bot ${botName}: ${error.message}`);
+            }
+        }
+        
+        async function createNewSwarm() {
+            const swarmName = document.getElementById('newSwarmName').value.trim();
+            const template = document.getElementById('swarmTemplate').value;
+            
+            if (!swarmName) {
+                alert('Please enter a swarm name');
+                return;
+            }
+            
+            try {
+                const requestData = { name: swarmName };
+                if (template) {
+                    requestData.template = template;
+                }
+                
+                const response = await fetch('/api/swarms', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    logActivity(`🌊 Created swarm: ${swarmName}${template ? ` (${template})` : ''}`);
+                    document.getElementById('newSwarmName').value = '';
+                    setTimeout(refreshSwarmList, 500);
+                } else {
+                    logActivity(`❌ Failed to create swarm: ${result.error}`);
+                }
+            } catch (error) {
+                logActivity(`❌ Error creating swarm: ${error.message}`);
+            }
+        }
+        
+        async function refreshSwarmList() {
+            try {
+                const response = await fetch('/api/swarms');
+                const result = await response.json();
+                
+                if (result.success && result.data.result) {
+                    swarmListData = result.data.result.swarms || [];
+                    updateSwarmListDisplay();
+                } else {
+                    document.getElementById('swarmList').innerHTML = '<div style="color: #ef4444; text-align: center; padding: 20px;">Failed to load swarm list</div>';
+                }
+            } catch (error) {
+                console.error('Swarm list refresh failed:', error);
+                document.getElementById('swarmList').innerHTML = '<div style="color: #ef4444; text-align: center; padding: 20px;">Error loading swarms</div>';
+            }
+        }
+        
+        function updateSwarmListDisplay() {
+            const container = document.getElementById('swarmList');
+            
+            if (swarmListData.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #6b7280; padding: 20px;">No swarms created yet</div>';
+                return;
+            }
+            
+            const swarmsHtml = swarmListData.map(swarm => {
+                const statusColor = {
+                    'active': '#10b981',
+                    'idle': '#3b82f6',
+                    'error': '#ef4444',
+                    'stopped': '#6b7280'
+                }[swarm.status] || '#6b7280';
+                
+                return `
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 8px;">
+                        <div>
+                            <span style="font-weight: 600;">${swarm.name}</span>
+                            <span style="color: #6b7280; margin-left: 8px;">(${swarm.bot_count} bots)</span>
+                            <br>
+                            <span style="color: ${statusColor}; font-size: 0.875rem;">● ${swarm.status}</span>
+                            <span style="color: #6b7280; margin-left: 8px; font-size: 0.875rem;">Uptime: ${formatUptime(swarm.uptime)}</span>
+                        </div>
+                        <div>
+                            <button class="btn" style="padding: 4px 8px; margin: 2px;" onclick="startSwarm('${swarm.swarm_id}', '${swarm.name}')">🚀</button>
+                            <button class="btn btn-secondary" style="padding: 4px 8px; margin: 2px;" onclick="stopSwarm('${swarm.swarm_id}', '${swarm.name}')">⏹️</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = swarmsHtml;
+        }
+        
+        async function startSwarm(swarmId, swarmName) {
+            try {
+                const response = await fetch(`/api/swarms/${swarmId}/start`, {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    logActivity(`🚀 Started swarm: ${swarmName}`);
+                    setTimeout(() => {
+                        refreshSwarmList();
+                        refreshBotList();
+                    }, 500);
+                } else {
+                    logActivity(`❌ Failed to start swarm ${swarmName}: ${result.error}`);
+                }
+            } catch (error) {
+                logActivity(`❌ Error starting swarm ${swarmName}: ${error.message}`);
+            }
+        }
+        
+        async function stopSwarm(swarmId, swarmName) {
+            try {
+                const response = await fetch(`/api/swarms/${swarmId}/stop`, {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    logActivity(`⏹️ Stopped swarm: ${swarmName}`);
+                    setTimeout(() => {
+                        refreshSwarmList();
+                        refreshBotList();
+                    }, 500);
+                } else {
+                    logActivity(`❌ Failed to stop swarm ${swarmName}: ${result.error}`);
+                }
+            } catch (error) {
+                logActivity(`❌ Error stopping swarm ${swarmName}: ${error.message}`);
+            }
+        }
+        
+        function updateTargetOptions() {
+            const targetType = document.getElementById('targetType').value;
+            const targetSelection = document.getElementById('targetSelection');
+            
+            if (targetType === 'auto') {
+                targetSelection.style.display = 'none';
+            } else {
+                targetSelection.style.display = 'block';
+                
+                if (targetType === 'bot') {
+                    targetSelection.innerHTML = '<option value="">Select Bot</option>' +
+                        botListData.map(bot => `<option value="${bot.bot_id}">${bot.name} (${bot.type})</option>`).join('');
+                } else if (targetType === 'swarm') {
+                    targetSelection.innerHTML = '<option value="">Select Swarm</option>' +
+                        swarmListData.map(swarm => `<option value="${swarm.swarm_id}">${swarm.name}</option>`).join('');
+                }
+            }
+        }
+        
+        async function delegateCommand() {
+            const command = document.getElementById('delegateCommand').value.trim();
+            const parametersText = document.getElementById('commandParameters').value.trim();
+            const targetType = document.getElementById('targetType').value;
+            const targetSelection = document.getElementById('targetSelection').value;
+            
+            if (!command) {
+                alert('Please enter a command');
+                return;
+            }
+            
+            let parameters = {};
+            if (parametersText) {
+                try {
+                    parameters = JSON.parse(parametersText);
+                } catch (error) {
+                    alert('Invalid JSON in parameters');
+                    return;
+                }
+            }
+            
+            // Build command data
+            const commandData = {
+                command: command,
+                args: [],
+                parameters: parameters
+            };
+            
+            if (targetType === 'bot' && targetSelection) {
+                commandData.target_bot = targetSelection;
+            } else if (targetType === 'swarm' && targetSelection) {
+                commandData.target_swarm = targetSelection;
+            }
+            
+            showLoading('delegationResult', 'delegationOutput');
+            
+            try {
+                const result = await makeApiCall('/api/command', commandData);
+                showResult('delegationResult', 'delegationOutput', result);
+                
+                const targetInfo = targetType === 'auto' ? 'auto-selected' : 
+                                 targetType === 'bot' ? botListData.find(b => b.bot_id === targetSelection)?.name :
+                                 swarmListData.find(s => s.swarm_id === targetSelection)?.name;
+                
+                logActivity(`⚡ Delegated '${command}' to ${targetInfo || 'unknown target'}`);
+            } catch (error) {
+                showResult('delegationResult', 'delegationOutput', `Error: ${error.message}`);
+                logActivity(`❌ Command delegation failed: ${error.message}`);
+            }
+        }
+        
+        function connectWebSocket() {
+            if (websocketConnection) {
+                websocketConnection.close();
+            }
+            
+            try {
+                const wsUrl = `ws://${window.location.hostname}:8765`;
+                websocketConnection = new WebSocket(wsUrl);
+                
+                websocketConnection.onopen = function() {
+                    logActivity('🔌 WebSocket connected for real-time updates');
+                };
+                
+                websocketConnection.onmessage = function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        handleWebSocketMessage(data);
+                    } catch (error) {
+                        console.error('WebSocket message parse error:', error);
+                    }
+                };
+                
+                websocketConnection.onclose = function() {
+                    logActivity('🔌 WebSocket disconnected');
+                };
+                
+                websocketConnection.onerror = function(error) {
+                    logActivity('❌ WebSocket error: Connection failed');
+                    console.error('WebSocket error:', error);
+                };
+                
+            } catch (error) {
+                logActivity(`❌ WebSocket connection failed: ${error.message}`);
+            }
+        }
+        
+        function handleWebSocketMessage(data) {
+            switch (data.type) {
+                case 'bot_event':
+                    const eventEmoji = data.event === 'started' ? '🚀' : 
+                                     data.event === 'stopped' ? '⏹️' : 
+                                     data.event === 'error' ? '❌' : '📋';
+                    logActivity(`${eventEmoji} Bot event: ${data.bot_id} ${data.event}`);
+                    // Refresh lists after bot events
+                    setTimeout(refreshBotList, 500);
+                    break;
+                    
+                case 'status_update':
+                    // Update director status
+                    refreshDirectorStatus();
+                    break;
+                    
+                case 'command_result':
+                    logActivity(`✅ Command completed: ${data.command_id}`);
+                    break;
+                    
+                case 'error':
+                    logActivity(`❌ WebSocket error: ${data.message}`);
+                    break;
+                    
+                default:
+                    console.log('Unknown WebSocket message:', data);
+            }
+        }
+        
+        function logActivity(message) {
+            const log = document.getElementById('activityLog');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `<div style="margin-bottom: 4px;"><span style="color: #6b7280;">[${timestamp}]</span> ${message}</div>`;
+            
+            log.innerHTML += logEntry;
+            log.scrollTop = log.scrollHeight;
+            
+            // Keep only last 100 entries
+            const entries = log.children;
+            if (entries.length > 100) {
+                log.removeChild(entries[0]);
+            }
+        }
+        
+        function clearActivityLog() {
+            document.getElementById('activityLog').innerHTML = '<div style="color: #10b981;">[System] Activity log cleared</div>';
+        }
+        
+        function formatUptime(seconds) {
+            if (seconds < 60) return `${Math.floor(seconds)}s`;
+            if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
+            if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
+            return `${Math.floor(seconds / 86400)}d`;
+        }
+
         // Drag and drop functionality
         function setupDragAndDrop() {
             const fileUpload = document.querySelector('.file-upload');
@@ -1207,6 +1661,7 @@
                 console.error('Error parsing metrics:', error);
             }
         }
+
         // Handle refactor type change
         document.addEventListener('DOMContentLoaded', function() {
             const refactorType = document.getElementById('refactorType');

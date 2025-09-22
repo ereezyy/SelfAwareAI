@@ -10,3 +10,8 @@ protobuf>=3.20.0
 numpy>=1.21.0
 autopep8>=1.6.0
 black>=22.0.0
+
+# Bot Management System Dependencies  
+websockets>=11.0.2
+asyncio-mqtt>=0.11.1
+black>=22.0.0
