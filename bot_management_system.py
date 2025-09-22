@@ -1009,8 +1009,15 @@ if __name__ == "__main__":
         
         print("\n🎯 Demo completed! System is ready for use.")
         
+        # Keep running for service mode
+        try:
+            while True:
+                await asyncio.sleep(60)
+                await director._broadcast_status_update()
+        except KeyboardInterrupt:
+            print("\n🛑 Shutting down Bot Management System...")
+            await director.stop()
+            
         return director
     
     # Run the demo
-    import asyncio
-    director = asyncio.run(demo())

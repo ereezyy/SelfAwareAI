@@ -1704,29 +1704,14 @@ def start_backend_service(service):
             }), 400
         
         try:
-            # Initialize and start director bot
-            if not director_bot:
-                from bot_management_system import get_director_bot
-                director_bot = get_director_bot()
-            
-            # Start director bot in background thread
-            def start_director():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                loop.run_until_complete(director_bot.start())
-            
-            import threading
-            director_thread = threading.Thread(target=start_director)
-            director_thread.daemon = True
-            director_thread.start()
-            
-            logger.info("Started bot management system")
-            
+            # Start Bot Management System
+            result = subprocess.Popen([
+                sys.executable, 'bot_management_system.py'
+            ])
             return jsonify({
-                'success': True,
-                'message': 'Bot management system started successfully',
-                'service': 'bot_management'
-            }), 200
+                'status': 'success',
+                'message': f'Bot Management System started with PID {result.pid}'
+            })
             
         except Exception as e:
             logger.error(f"Failed to start bot management system: {e}")
@@ -1784,38 +1769,21 @@ def stop_backend_service(service):
             }), 500
     
     elif service == 'bot_management':
-        if not director_bot or not director_bot.is_running:
-            return jsonify({
-                'success': False,
-                'error': 'Bot management system is not running'
-            }), 400
+        # Stop Bot Management System processes
+        killed_count = 0
+        for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+            try:
+                cmdline = proc.info['cmdline']
+                if cmdline and 'bot_management_system.py' in ' '.join(cmdline):
+                    proc.terminate()
+                    killed_count += 1
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
         
-        try:
-            # Stop director bot
-            def stop_director():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                loop.run_until_complete(director_bot.stop())
-            
-            import threading
-            stop_thread = threading.Thread(target=stop_director)
-            stop_thread.start()
-            stop_thread.join(timeout=5)  # Wait up to 5 seconds
-            
-            logger.info("Stopped bot management system")
-            
-            return jsonify({
-                'success': True,
-                'message': 'Bot management system stopped successfully',
-                'service': 'bot_management'
-            }), 200
-            
-        except Exception as e:
-            logger.error(f"Failed to stop bot management system: {e}")
-            return jsonify({
-                'success': False,
-                'error': f'Failed to stop bot management system: {str(e)}'
-            }), 500
+        return jsonify({
+            'status': 'success',
+            'message': f'Stopped {killed_count} Bot Management System process(es)'
+        })
     
     else:
         return jsonify({
@@ -1937,3 +1905,43 @@ if __name__ == '__main__':
     print(f"🔧 Allowed file types: {', '.join(ALLOWED_EXTENSIONS)}")
     print("=" * 50)
     
+    try:
+        services = {
+            'api_server': {'status': 'running', 'pid': os.getpid()},
+            'websocket': {'status': 'stopped', 'pid': None},
+            'bot_management': {'status': 'stopped', 'pid': None}
+        }
+        
+        # Check WebSocket server
+        for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+            try:
+                cmdline = proc.info['cmdline']
+                if cmdline and 'websocket_server.py' in ' '.join(cmdline):
+                    services['websocket'] = {
+                        'status': 'running',
+                        'pid': proc.info['pid']
+                    }
+                    break
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+        
+        # Check Bot Management System
+        for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+            try:
+                cmdline = proc.info['cmdline']
+                if cmdline and 'bot_management_system.py' in ' '.join(cmdline):
+                    services['bot_management'] = {
+                        'status': 'running',
+                        'pid': proc.info['pid']
+                    }
+                    break
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+        
+        return jsonify(services)
+    
+    except Exception as e:
+        logger.error(f"Service status check failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+    app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
