@@ -1449,6 +1449,10 @@
         }
 
         async function refreshAutonomyStatus() {
+            if (!document.getElementById('autonomy').classList.contains('active')) {
+                return; // Don't refresh if tab is not active
+            }
+            
             try {
                 const response = await fetch('/api/autonomy/status');
                 const result = await response.json();
@@ -1460,6 +1464,13 @@
                 document.getElementById('autonomyStatus').innerHTML = `<p style="color: #ef4444;">Error loading status: ${error.message}</p>`;
             }
         }
+
+        // Auto-refresh autonomy status every 30 seconds when tab is active
+        setInterval(() => {
+            if (document.getElementById('autonomy')?.classList.contains('active')) {
+                refreshAutonomyStatus();
+            }
+        }, 30000);
 
         async function forceHealthCheck() {
             showLoading('healthResult', 'healthOutput');

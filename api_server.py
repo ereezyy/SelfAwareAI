@@ -12,10 +12,13 @@ import tempfile
 import uuid
 from datetime import datetime
 import asyncio
-import datetime
+import threading
+import time
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
+import websockets
+import weakref
 
 # Add the current directory to Python path to import bot modules
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -27,12 +30,12 @@ try:
     from text_humanization_module import TextHumanizer
     from ai_text_detection_module import AITextDetector
     from command_interface import CommandInterface
+    from bot_management_system import DirectorBot, BotCommand, BotStatus, BotType
+    from bot_management_system import AnalyzerBot, GeneratorBot, MonitorBot, BotSwarm
     
-    MODULES_AVAILABLE = True
+    BOT_MODULES_AVAILABLE = True
     print("✅ All bot modules imported successfully")
 except ImportError as e:
-    print(f"⚠️  Warning: Could not import bot modules: {e}")
-    MODULES_AVAILABLE = False
 
 # Flask app configuration
 app = Flask(__name__)
@@ -796,7 +799,7 @@ def _execute_bot_command(command, args):
                 return jsonify({
                     'success': False,
                     'result': 'Error: Bot modules not available. Please check if all dependencies are installed.'
-                })
+                }), 503
         
         # Build command string
         command_str = command
@@ -815,6 +818,18 @@ def _execute_bot_command(command, args):
         
         # Execute command
         result = bot_interface.process_command(command_str)
+        
+        # Broadcast command execution to WebSocket clients
+        if bot_event_loop:
+            asyncio.run_coroutine_threadsafe(
+                broadcast_to_websockets({
+                    'type': 'command_executed',
+                    'command': command_str,
+                    'result': result,
+                    'timestamp': datetime.now().isoformat()
+                }),
+                bot_event_loop
+            )
         
         return jsonify({
             'success': True,
