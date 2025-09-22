@@ -971,6 +971,126 @@
             output.textContent = result;
         }
 
+        // Autonomy and Health functions
+        async function enableAutonomy() {
+            showLoading('autonomyResult', 'autonomyOutput');
+            const result = await makeApiCall('/api/autonomy/enable');
+            showResult('autonomyResult', 'autonomyOutput', result);
+            setTimeout(refreshAutonomyStatus, 1000);
+        }
+
+        async function disableAutonomy() {
+            showLoading('autonomyResult', 'autonomyOutput');
+            const result = await makeApiCall('/api/autonomy/disable');
+            showResult('autonomyResult', 'autonomyOutput', result);
+            setTimeout(refreshAutonomyStatus, 1000);
+        }
+
+        async function refreshAutonomyStatus() {
+            try {
+                const response = await fetch('/api/autonomy/status');
+                const result = await response.json();
+                const statusText = result.success ? result.result : result.error;
+                
+                const statusDiv = document.getElementById('autonomyStatus');
+                statusDiv.innerHTML = `<pre style="white-space: pre-wrap; font-family: inherit; margin: 0;">${statusText}</pre>`;
+            } catch (error) {
+                document.getElementById('autonomyStatus').innerHTML = `<p style="color: #ef4444;">Error loading status: ${error.message}</p>`;
+            }
+        }
+
+        async function forceHealthCheck() {
+            showLoading('healthResult', 'healthOutput');
+            const result = await makeApiCall('/api/system/health-check');
+            showResult('healthResult', 'healthOutput', result);
+            updateMetricsFromHealthCheck(result);
+        }
+
+        async function optimizeSystem() {
+            showLoading('healthResult', 'healthOutput');
+            const result = await makeApiCall('/api/system/optimize');
+            showResult('healthResult', 'healthOutput', result);
+            setTimeout(refreshAutonomyStatus, 2000);
+        }
+
+        async function getRecoveryHistory() {
+            showLoading('healthResult', 'healthOutput');
+            const result = await makeApiCall('/api/system/recovery-history', {});
+            showResult('healthResult', 'healthOutput', result);
+        }
+
+        // Real-time metrics updates
+        function startMetricsUpdates() {
+            // Update metrics every 30 seconds
+            setInterval(updateMetrics, 30000);
+            // Initial update
+            updateMetrics();
+        }
+
+        async function updateMetrics() {
+            try {
+                const response = await fetch('/api/system/health-check', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const result = await response.json();
+                updateMetricsFromHealthCheck(result.result);
+            } catch (error) {
+                console.error('Metrics update failed:', error);
+            }
+        }
+
+        function updateMetricsFromHealthCheck(healthCheckResult) {
+            try {
+                // Parse metrics from health check result
+                const lines = healthCheckResult.split('\n');
+                let metrics = {};
+                
+                for (const line of lines) {
+                    if (line.includes('CPU Usage:')) {
+                        const match = line.match(/(\d+\.?\d*)%/);
+                        if (match) metrics.cpu = parseFloat(match[1]);
+                    } else if (line.includes('Memory Usage:')) {
+                        const match = line.match(/(\d+\.?\d*)%/);
+                        if (match) metrics.memory = parseFloat(match[1]);
+                    } else if (line.includes('Disk Usage:')) {
+                        const match = line.match(/(\d+\.?\d*)%/);
+                        if (match) metrics.disk = parseFloat(match[1]);
+                    } else if (line.includes('Response Time:')) {
+                        const match = line.match(/(\d+\.?\d*)/);
+                        if (match) metrics.responseTime = parseFloat(match[1]) * 1000; // Convert to ms
+                    }
+                }
+                
+                // Update UI
+                if (metrics.cpu !== undefined) {
+                    const cpuElement = document.getElementById('cpuMetric');
+                    cpuElement.textContent = `${metrics.cpu.toFixed(1)}%`;
+                    cpuElement.style.color = metrics.cpu > 80 ? '#ef4444' : metrics.cpu > 60 ? '#f59e0b' : '#10b981';
+                }
+                
+                if (metrics.memory !== undefined) {
+                    const memoryElement = document.getElementById('memoryMetric');
+                    memoryElement.textContent = `${metrics.memory.toFixed(1)}%`;
+                    memoryElement.style.color = metrics.memory > 85 ? '#ef4444' : metrics.memory > 70 ? '#f59e0b' : '#10b981';
+                }
+                
+                if (metrics.disk !== undefined) {
+                    const diskElement = document.getElementById('diskMetric');
+                    diskElement.textContent = `${metrics.disk.toFixed(1)}%`;
+                    diskElement.style.color = metrics.disk > 90 ? '#ef4444' : metrics.disk > 75 ? '#f59e0b' : '#10b981';
+                }
+                
+                if (metrics.responseTime !== undefined) {
+                    const responseElement = document.getElementById('responseMetric');
+                    responseElement.textContent = `${metrics.responseTime.toFixed(0)}ms`;
+                    responseElement.style.color = metrics.responseTime > 1000 ? '#ef4444' : metrics.responseTime > 500 ? '#f59e0b' : '#10b981';
+                }
+                
+            } catch (error) {
+                console.error('Error parsing metrics:', error);
+            }
+        }
         // Handle refactor type change
         document.addEventListener('DOMContentLoaded', function() {
             const refactorType = document.getElementById('refactorType');

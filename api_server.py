@@ -385,6 +385,36 @@ def get_system_status():
     """Get comprehensive system status."""
     return _execute_bot_command('status', [])
 
+@app.route('/api/autonomy/enable', methods=['POST'])
+def enable_autonomy():
+    """Enable autonomous self-healing."""
+    return _execute_bot_command('enable_autonomy', [])
+
+@app.route('/api/autonomy/disable', methods=['POST'])
+def disable_autonomy():
+    """Disable autonomous self-healing."""
+    return _execute_bot_command('disable_autonomy', [])
+
+@app.route('/api/autonomy/status', methods=['GET'])
+def get_autonomy_status():
+    """Get autonomy and health status."""
+    return _execute_bot_command('autonomy_status', [])
+
+@app.route('/api/system/health-check', methods=['POST'])
+def force_health_check():
+    """Force immediate health check."""
+    return _execute_bot_command('force_health_check', [])
+
+@app.route('/api/system/optimize', methods=['POST'])
+def optimize_system():
+    """Trigger system optimization."""
+    return _execute_bot_command('system_optimize', [])
+
+@app.route('/api/system/recovery-history', methods=['GET'])
+def get_recovery_history():
+    """Get recovery action history."""
+    return _execute_bot_command('recovery_history', [])
+
 @app.route('/api/files', methods=['GET'])
 def list_uploaded_files():
     """List all uploaded files in current session."""
