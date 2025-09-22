@@ -84,6 +84,184 @@
             text-align: center;
         }
 
+        .app-container {
+            max-width: 1200px;
+            text-align: left;
+        }
+
+        .app-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .feature-panel {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px 0;
+            border: 1px solid #e2e8f0;
+        }
+
+        .feature-panel h3 {
+            color: #2563eb;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #2563eb, #3b82f6);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #6b7280, #9ca3af);
+        }
+
+        .result-panel {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .result-panel pre {
+            margin: 0;
+            white-space: pre-wrap;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e2e8f0;
+            margin-bottom: 24px;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            color: #6b7280;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            color: #2563eb;
+            border-bottom: 2px solid #2563eb;
+        }
+
+        .tab:hover {
+            color: #2563eb;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-ok { background: #10b981; }
+        .status-warning { background: #f59e0b; }
+        .status-error { background: #ef4444; }
+
+        .file-upload {
+            border: 2px dashed #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            transition: border-color 0.3s ease;
+            cursor: pointer;
+        }
+
+        .file-upload:hover {
+            border-color: #2563eb;
+        }
+
+        .file-upload.dragover {
+            border-color: #2563eb;
+            background: rgba(37, 99, 235, 0.05);
+        }
+
         .logo {
             width: 80px;
             height: 80px;
@@ -199,41 +377,220 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="logo">🤖</div>
-        <h1>Self-Aware Assistant Bot</h1>
-        <p class="subtitle">Advanced AI with self-healing, coding, and text processing capabilities</p>
+    <div class="container app-container">
+        <div class="app-header">
+            <div class="logo">🤖</div>
+            <h1>Self-Aware Assistant Bot</h1>
+            <p class="subtitle">Advanced AI with self-healing, coding, and text processing capabilities</p>
+            
+            <div id="statusIndicator" style="margin-top: 20px;">
+                <span class="status-indicator status-warning"></span>
+                <span id="statusText">Connecting...</span>
+            </div>
+        </div>
 
-        <div class="features">
-            <div class="feature">
-                <span class="feature-icon">🧠</span>
-                <h3>Self-Awareness</h3>
-                <p>Monitors system resources, uptime, and module health</p>
+        <!-- Tabs Navigation -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('overview')">📊 Overview</button>
+            <button class="tab" onclick="switchTab('analyze')">🔍 Code Analysis</button>
+            <button class="tab" onclick="switchTab('generate')">⚡ Code Generation</button>
+            <button class="tab" onclick="switchTab('refactor')">🔧 Refactoring</button>
+            <button class="tab" onclick="switchTab('text')">📝 Text Tools</button>
+            <button class="tab" onclick="switchTab('status')">💡 System Status</button>
+        </div>
+
+        <!-- Overview Tab -->
+        <div id="overview" class="tab-content active">
+            <div class="features">
+                <div class="feature">
+                    <span class="feature-icon">🧠</span>
+                    <h3>Self-Awareness</h3>
+                    <p>Monitors system resources, uptime, and module health</p>
+                </div>
+                <div class="feature">
+                    <span class="feature-icon">🔧</span>
+                    <h3>Self-Healing</h3>
+                    <p>Automatically detects and recovers from errors</p>
+                </div>
+                <div class="feature">
+                    <span class="feature-icon">💻</span>
+                    <h3>Self-Coding</h3>
+                    <p>Analyzes, patches, and modifies code dynamically</p>
+                </div>
+                <div class="feature">
+                    <span class="feature-icon">📝</span>
+                    <h3>Text Humanization</h3>
+                    <p>Makes AI-generated text sound more natural</p>
+                </div>
+                <div class="feature">
+                    <span class="feature-icon">🤖</span>
+                    <h3>AI Detection</h3>
+                    <p>Identifies whether text was written by AI or humans</p>
+                </div>
+                <div class="feature">
+                    <span class="feature-icon">⚡</span>
+                    <h3>Command Interface</h3>
+                    <p>Easy-to-use web and command-line interface</p>
+                </div>
             </div>
-            <div class="feature">
-                <span class="feature-icon">🔧</span>
-                <h3>Self-Healing</h3>
-                <p>Automatically detects and recovers from errors</p>
+        </div>
+
+        <!-- Code Analysis Tab -->
+        <div id="analyze" class="tab-content">
+            <div class="feature-panel">
+                <h3>🔍 Code Analysis Tools</h3>
+                
+                <div class="form-group">
+                    <label for="analyzeFile">Select Python file to analyze:</label>
+                    <div class="file-upload" onclick="document.getElementById('analyzeFileInput').click()">
+                        <input type="file" id="analyzeFileInput" accept=".py" style="display: none;" onchange="handleFileSelect(this)">
+                        <div id="analyzeFileText">📁 Click to select a Python file or drag & drop</div>
+                    </div>
+                </div>
+                
+                <div>
+                    <button class="btn" onclick="analyzeCodeStructure()">📊 Analyze Structure</button>
+                    <button class="btn" onclick="analyzeCodeQuality()">🎯 Quality Analysis</button>
+                    <button class="btn btn-secondary" onclick="autoFixIssues()">🔧 Auto Fix</button>
+                </div>
+                
+                <div id="analysisResult" class="result-panel" style="display: none;">
+                    <pre id="analysisOutput"></pre>
+                </div>
             </div>
-            <div class="feature">
-                <span class="feature-icon">💻</span>
-                <h3>Self-Coding</h3>
-                <p>Analyzes, patches, and modifies code dynamically</p>
+        </div>
+
+        <!-- Code Generation Tab -->
+        <div id="generate" class="tab-content">
+            <div class="feature-panel">
+                <h3>⚡ Code Generation</h3>
+                
+                <div class="form-group">
+                    <label for="codeType">Code Type:</label>
+                    <select id="codeType" class="form-control">
+                        <option value="class_basic">Basic Class</option>
+                        <option value="singleton">Singleton Pattern</option>
+                        <option value="context_manager">Context Manager</option>
+                        <option value="api_client">API Client</option>
+                        <option value="unit_test">Unit Test</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="className">Class/Function Name:</label>
+                    <input type="text" id="className" class="form-control" placeholder="MyClass" value="MyClass">
+                </div>
+                
+                <div class="form-group">
+                    <label for="additionalParams">Additional Parameters (JSON format, optional):</label>
+                    <textarea id="additionalParams" class="form-control" rows="3" placeholder='{"api_name": "MyAPI", "init_params": "self, name"}' style="font-family: monospace;"></textarea>
+                </div>
+                
+                <div>
+                    <button class="btn" onclick="generateCode()">⚡ Generate Code</button>
+                    <button class="btn btn-secondary" onclick="generateTests()">🧪 Generate Tests</button>
+                </div>
+                
+                <div id="generationResult" class="result-panel" style="display: none;">
+                    <pre id="generationOutput"></pre>
+                </div>
             </div>
-            <div class="feature">
-                <span class="feature-icon">📝</span>
-                <h3>Text Humanization</h3>
-                <p>Makes AI-generated text sound more natural</p>
+        </div>
+
+        <!-- Refactoring Tab -->
+        <div id="refactor" class="tab-content">
+            <div class="feature-panel">
+                <h3>🔧 Code Refactoring Tools</h3>
+                
+                <div class="form-group">
+                    <label for="refactorFile">Select Python file to refactor:</label>
+                    <div class="file-upload" onclick="document.getElementById('refactorFileInput').click()">
+                        <input type="file" id="refactorFileInput" accept=".py" style="display: none;" onchange="handleRefactorFileSelect(this)">
+                        <div id="refactorFileText">📁 Click to select a Python file</div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="refactorType">Refactoring Type:</label>
+                    <select id="refactorType" class="form-control">
+                        <option value="format_with_black">Format with Black</option>
+                        <option value="format_with_autopep8">Format with autopep8</option>
+                        <option value="add_docstrings">Add Missing Docstrings</option>
+                        <option value="rename_variable">Rename Variable</option>
+                    </select>
+                </div>
+                
+                <div id="renameSection" style="display: none;">
+                    <div class="form-group">
+                        <label for="oldName">Old Variable Name:</label>
+                        <input type="text" id="oldName" class="form-control" placeholder="old_var_name">
+                    </div>
+                    <div class="form-group">
+                        <label for="newName">New Variable Name:</label>
+                        <input type="text" id="newName" class="form-control" placeholder="new_var_name">
+                    </div>
+                </div>
+                
+                <div>
+                    <button class="btn" onclick="refactorCode()">🔧 Apply Refactoring</button>
+                    <button class="btn btn-secondary" onclick="patchCode()">📝 Apply Patch</button>
+                </div>
+                
+                <div id="refactorResult" class="result-panel" style="display: none;">
+                    <pre id="refactorOutput"></pre>
+                </div>
             </div>
-            <div class="feature">
-                <span class="feature-icon">🤖</span>
-                <h3>AI Detection</h3>
-                <p>Identifies whether text was written by AI or humans</p>
+        </div>
+
+        <!-- Text Tools Tab -->
+        <div id="text" class="tab-content">
+            <div class="feature-panel">
+                <h3>📝 Text Humanization</h3>
+                
+                <div class="form-group">
+                    <label for="textToHumanize">Text to humanize:</label>
+                    <textarea id="textToHumanize" class="form-control" rows="4" placeholder="Enter text that you want to make sound more natural..."></textarea>
+                </div>
+                
+                <div>
+                    <button class="btn" onclick="humanizeText()">📝 Humanize Text</button>
+                </div>
+                
+                <div id="humanizeResult" class="result-panel" style="display: none;">
+                    <pre id="humanizeOutput"></pre>
+                </div>
             </div>
-            <div class="feature">
-                <span class="feature-icon">⚡</span>
-                <h3>Command Interface</h3>
-                <p>Easy-to-use command-line interface</p>
+            
+            <div class="feature-panel">
+                <h3>🤖 AI Text Detection</h3>
+                
+                <div class="form-group">
+                    <label for="textToDetect">Text to analyze:</label>
+                    <textarea id="textToDetect" class="form-control" rows="4" placeholder="Enter text to check if it was generated by AI..."></textarea>
+                </div>
+                
+                <div>
+                    <button class="btn" onclick="detectAIText()">🤖 Detect AI Text</button>
+                </div>
+                
+                <div id="detectResult" class="result-panel" style="display: none;">
+                    <pre id="detectOutput"></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Status Tab -->
+        <div id="status" class="tab-content">
+            <div class="feature-panel">
+                <h3>💡 System Status</h3>
+                
+                <div>
+                    <button class="btn" onclick="getSystemStatus()">💡 Refresh Status</button>
+                </div>
+                
+                <div id="statusResult" class="result-panel" style="display: none;">
+                    <pre id="statusOutput"></pre>
+                </div>
             </div>
         </div>
 
@@ -313,6 +670,270 @@
         // Check PWA status on load
         window.addEventListener('load', () => {
             setTimeout(checkPWAStatus, 1000);
+            checkBackendStatus();
+        });
+
+        // Tab switching functionality
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+
+        // Backend API functions
+        async function makeApiCall(command, args = []) {
+            try {
+                const response = await fetch('/api/command', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        command: command,
+                        args: args
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                return data.result;
+            } catch (error) {
+                console.error('API call failed:', error);
+                return `Error: ${error.message}`;
+            }
+        }
+
+        // Check if backend is running
+        async function checkBackendStatus() {
+            try {
+                const result = await makeApiCall('status');
+                document.getElementById('statusText').textContent = 'Connected';
+                document.querySelector('#statusIndicator .status-indicator').className = 'status-indicator status-ok';
+            } catch (error) {
+                document.getElementById('statusText').textContent = 'Backend Offline';
+                document.querySelector('#statusIndicator .status-indicator').className = 'status-indicator status-error';
+            }
+        }
+
+        // File handling
+        let selectedAnalyzeFile = null;
+        let selectedRefactorFile = null;
+
+        function handleFileSelect(input) {
+            const file = input.files[0];
+            if (file) {
+                selectedAnalyzeFile = file;
+                document.getElementById('analyzeFileText').textContent = `📄 ${file.name}`;
+            }
+        }
+
+        function handleRefactorFileSelect(input) {
+            const file = input.files[0];
+            if (file) {
+                selectedRefactorFile = file;
+                document.getElementById('refactorFileText').textContent = `📄 ${file.name}`;
+            }
+        }
+
+        // Drag and drop functionality
+        function setupDragAndDrop() {
+            const fileUpload = document.querySelector('.file-upload');
+            
+            fileUpload.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                fileUpload.classList.add('dragover');
+            });
+            
+            fileUpload.addEventListener('dragleave', () => {
+                fileUpload.classList.remove('dragover');
+            });
+            
+            fileUpload.addEventListener('drop', (e) => {
+                e.preventDefault();
+                fileUpload.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0 && files[0].name.endsWith('.py')) {
+                    selectedAnalyzeFile = files[0];
+                    document.getElementById('analyzeFileText').textContent = `📄 ${files[0].name}`;
+                }
+            });
+        }
+
+        // API Functions for each feature
+        async function analyzeCodeStructure() {
+            if (!selectedAnalyzeFile) {
+                alert('Please select a Python file first');
+                return;
+            }
+            
+            showLoading('analysisResult', 'analysisOutput');
+            const result = await makeApiCall('analyze_code', [selectedAnalyzeFile.name]);
+            showResult('analysisResult', 'analysisOutput', result);
+        }
+
+        async function analyzeCodeQuality() {
+            if (!selectedAnalyzeFile) {
+                alert('Please select a Python file first');
+                return;
+            }
+            
+            showLoading('analysisResult', 'analysisOutput');
+            const result = await makeApiCall('analyze_quality', [selectedAnalyzeFile.name]);
+            showResult('analysisResult', 'analysisOutput', result);
+        }
+
+        async function autoFixIssues() {
+            if (!selectedAnalyzeFile) {
+                alert('Please select a Python file first');
+                return;
+            }
+            
+            showLoading('analysisResult', 'analysisOutput');
+            const result = await makeApiCall('auto_fix', [selectedAnalyzeFile.name]);
+            showResult('analysisResult', 'analysisOutput', result);
+        }
+
+        async function generateCode() {
+            const codeType = document.getElementById('codeType').value;
+            const className = document.getElementById('className').value;
+            const additionalParams = document.getElementById('additionalParams').value;
+            
+            let args = ['generate_code', codeType, className];
+            
+            if (additionalParams.trim()) {
+                try {
+                    const params = JSON.parse(additionalParams);
+                    for (const [key, value] of Object.entries(params)) {
+                        args.push(key, value);
+                    }
+                } catch (e) {
+                    alert('Invalid JSON in additional parameters');
+                    return;
+                }
+            }
+            
+            showLoading('generationResult', 'generationOutput');
+            const result = await makeApiCall('generate_code', args.slice(1));
+            showResult('generationResult', 'generationOutput', result);
+        }
+
+        async function generateTests() {
+            if (!selectedAnalyzeFile) {
+                alert('Please select a Python file first');
+                return;
+            }
+            
+            showLoading('generationResult', 'generationOutput');
+            const result = await makeApiCall('generate_tests', [selectedAnalyzeFile.name]);
+            showResult('generationResult', 'generationOutput', result);
+        }
+
+        async function refactorCode() {
+            if (!selectedRefactorFile) {
+                alert('Please select a Python file first');
+                return;
+            }
+            
+            const refactorType = document.getElementById('refactorType').value;
+            let args = [selectedRefactorFile.name, refactorType];
+            
+            if (refactorType === 'rename_variable') {
+                const oldName = document.getElementById('oldName').value;
+                const newName = document.getElementById('newName').value;
+                if (!oldName || !newName) {
+                    alert('Please provide both old and new variable names');
+                    return;
+                }
+                args.push('old_name', oldName, 'new_name', newName);
+            }
+            
+            showLoading('refactorResult', 'refactorOutput');
+            const result = await makeApiCall('refactor_code', args);
+            showResult('refactorResult', 'refactorOutput', result);
+        }
+
+        async function patchCode() {
+            // Implementation for patch code functionality
+            alert('Patch code functionality - please implement specific patch requirements');
+        }
+
+        async function humanizeText() {
+            const text = document.getElementById('textToHumanize').value;
+            if (!text.trim()) {
+                alert('Please enter text to humanize');
+                return;
+            }
+            
+            showLoading('humanizeResult', 'humanizeOutput');
+            const result = await makeApiCall('humanize_text', [text]);
+            showResult('humanizeResult', 'humanizeOutput', result);
+        }
+
+        async function detectAIText() {
+            const text = document.getElementById('textToDetect').value;
+            if (!text.trim()) {
+                alert('Please enter text to analyze');
+                return;
+            }
+            
+            showLoading('detectResult', 'detectOutput');
+            const result = await makeApiCall('detect_ai_text', [text]);
+            showResult('detectResult', 'detectOutput', result);
+        }
+
+        async function getSystemStatus() {
+            showLoading('statusResult', 'statusOutput');
+            const result = await makeApiCall('status');
+            showResult('statusResult', 'statusOutput', result);
+        }
+
+        // Utility functions
+        function showLoading(resultId, outputId) {
+            const resultPanel = document.getElementById(resultId);
+            const output = document.getElementById(outputId);
+            
+            resultPanel.style.display = 'block';
+            output.innerHTML = '<div class="loading"></div> Processing...';
+        }
+
+        function showResult(resultId, outputId, result) {
+            const resultPanel = document.getElementById(resultId);
+            const output = document.getElementById(outputId);
+            
+            resultPanel.style.display = 'block';
+            output.textContent = result;
+        }
+
+        // Handle refactor type change
+        document.addEventListener('DOMContentLoaded', function() {
+            const refactorType = document.getElementById('refactorType');
+            const renameSection = document.getElementById('renameSection');
+            
+            refactorType.addEventListener('change', function() {
+                if (this.value === 'rename_variable') {
+                    renameSection.style.display = 'block';
+                } else {
+                    renameSection.style.display = 'none';
+                }
+            });
+            
+            setupDragAndDrop();
         });
     </script>
 </body>
