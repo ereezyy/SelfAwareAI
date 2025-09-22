@@ -998,6 +998,265 @@ def force_health_check():
 
 @app.route('/api/system/optimize', methods=['POST'])
 @require_modules('bot_modules')
+# Backend service control endpoints
+@app.route('/api/backend/status', methods=['GET'])
+def get_backend_status():
+    """Get status of all backend services"""
+    try:
+        services = {}
+        
+        # API Server (always running since we're in it)
+        services['api_server'] = {
+            'status': 'running',
+            'pid': os.getpid(),
+            'uptime': time.time() - psutil.Process(os.getpid()).create_time(),
+            'cpu_percent': psutil.Process(os.getpid()).cpu_percent(),
+            'memory_percent': psutil.Process(os.getpid()).memory_percent()
+        }
+        
+        # WebSocket Server
+        websocket_running = False
+        websocket_pid = None
+        for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+            try:
+                if any('websocket_server.py' in str(cmd) for cmd in proc.info['cmdline'] or []):
+                    websocket_running = True
+                    websocket_pid = proc.info['pid']
+                    break
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+        
+        services['websocket'] = {
+            'status': 'running' if websocket_running else 'stopped',
+            'pid': websocket_pid,
+            'uptime': time.time() - psutil.Process(websocket_pid).create_time() if websocket_pid else 0,
+            'cpu_percent': psutil.Process(websocket_pid).cpu_percent() if websocket_pid else 0,
+            'memory_percent': psutil.Process(websocket_pid).memory_percent() if websocket_pid else 0
+        }
+        
+        # Bot Management System
+        bot_management_running = False
+        bot_management_pid = None
+        for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+            try:
+                if any('bot_management_system.py' in str(cmd) for cmd in proc.info['cmdline'] or []):
+                    bot_management_running = True
+                    bot_management_pid = proc.info['pid']
+                    break
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+        
+        services['bot_management'] = {
+            'status': 'running' if bot_management_running else 'stopped',
+            'pid': bot_management_pid,
+            'uptime': time.time() - psutil.Process(bot_management_pid).create_time() if bot_management_pid else 0,
+            'cpu_percent': psutil.Process(bot_management_pid).cpu_percent() if bot_management_pid else 0,
+            'memory_percent': psutil.Process(bot_management_pid).memory_percent() if bot_management_pid else 0
+        }
+        
+        return jsonify({
+            'status': 'success',
+            'services': services,
+            'timestamp': time.time()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting backend status: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/backend/start/<service>', methods=['POST'])
+def start_backend_service(service):
+    """Start a backend service"""
+    try:
+        if service == 'api_server':
+            return jsonify({
+                'status': 'success',
+                'message': 'API Server is already running'
+            })
+        
+        elif service == 'websocket':
+            # Check if already running
+            for proc in psutil.process_iter(['pid', 'cmdline']):
+                try:
+                    if any('websocket_server.py' in str(cmd) for cmd in proc.info['cmdline'] or []):
+                        return jsonify({
+                            'status': 'success', 
+                            'message': 'WebSocket server is already running'
+                        })
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    continue
+            
+            # Start WebSocket server
+            process = subprocess.Popen([
+                sys.executable, 'websocket_server.py'
+            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            
+            running_processes['websocket'] = process
+            
+            return jsonify({
+                'status': 'success',
+                'message': 'WebSocket server started',
+                'pid': process.pid
+            })
+        
+        elif service == 'bot_management':
+            # Check if already running
+            for proc in psutil.process_iter(['pid', 'cmdline']):
+                try:
+                    if any('bot_management_system.py' in str(cmd) for cmd in proc.info['cmdline'] or []):
+                        return jsonify({
+                            'status': 'success',
+                            'message': 'Bot management system is already running'
+                        })
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    continue
+            
+            # Start bot management system
+            process = subprocess.Popen([
+                sys.executable, 'bot_management_system.py'
+            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            
+            running_processes['bot_management'] = process
+            
+            return jsonify({
+                'status': 'success',
+                'message': 'Bot management system started',
+                'pid': process.pid
+            })
+        
+        else:
+            return jsonify({
+                'status': 'error',
+                'message': f'Unknown service: {service}'
+            }), 400
+            
+    except Exception as e:
+        logger.error(f"Error starting service {service}: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/backend/stop/<service>', methods=['POST'])
+def stop_backend_service(service):
+    """Stop a backend service"""
+    try:
+        if service == 'api_server':
+            return jsonify({
+                'status': 'error',
+                'message': 'Cannot stop API server from itself'
+            }), 400
+        
+        elif service == 'websocket':
+            stopped = False
+            
+            # Stop tracked process
+            if service in running_processes:
+                process = running_processes[service]
+                try:
+                    process.terminate()
+                    process.wait(timeout=5)
+                    stopped = True
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    stopped = True
+                except Exception as e:
+                    logger.error(f"Error stopping tracked process: {e}")
+                finally:
+                    del running_processes[service]
+            
+            # Find and stop any running websocket processes
+            for proc in psutil.process_iter(['pid', 'cmdline']):
+                try:
+                    if any('websocket_server.py' in str(cmd) for cmd in proc.info['cmdline'] or []):
+                        proc.terminate()
+                        stopped = True
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    continue
+            
+            if stopped:
+                return jsonify({
+                    'status': 'success',
+                    'message': 'WebSocket server stopped'
+                })
+            else:
+                return jsonify({
+                    'status': 'success',
+                    'message': 'WebSocket server was not running'
+                })
+        
+        elif service == 'bot_management':
+            stopped = False
+            
+            # Stop tracked process
+            if service in running_processes:
+                process = running_processes[service]
+                try:
+                    process.terminate()
+                    process.wait(timeout=5)
+                    stopped = True
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    stopped = True
+                except Exception as e:
+                    logger.error(f"Error stopping tracked process: {e}")
+                finally:
+                    del running_processes[service]
+            
+            # Find and stop any running bot management processes
+            for proc in psutil.process_iter(['pid', 'cmdline']):
+                try:
+                    if any('bot_management_system.py' in str(cmd) for cmd in proc.info['cmdline'] or []):
+                        proc.terminate()
+                        stopped = True
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    continue
+            
+            if stopped:
+                return jsonify({
+                    'status': 'success',
+                    'message': 'Bot management system stopped'
+                })
+            else:
+                return jsonify({
+                    'status': 'success',
+                    'message': 'Bot management system was not running'
+                })
+        
+        else:
+            return jsonify({
+                'status': 'error',
+                'message': f'Unknown service: {service}'
+            }), 400
+            
+    except Exception as e:
+        logger.error(f"Error stopping service {service}: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/backend/restart/<service>', methods=['POST'])
+def restart_backend_service(service):
+    """Restart a backend service"""
+    try:
+        # First stop the service
+        stop_response = stop_backend_service(service)
+        if stop_response[1] not in [200, 400]:  # 400 is expected for api_server
+            return stop_response
+        
+        # Wait a moment
+        time.sleep(2)
+        
+        # Then start it
+        return start_backend_service(service)
+        
+    except Exception as e:
+        logger.error(f"Error restarting service {service}: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
 @handle_api_errors
 def optimize_system():
     """Trigger system optimization."""
