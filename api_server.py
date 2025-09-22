@@ -14,11 +14,11 @@ from datetime import datetime
 import asyncio
 import threading
 import time
+import websockets
+import json as json_module
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
-import websockets
-import weakref
 
 # Add the current directory to Python path to import bot modules
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -30,6 +30,9 @@ try:
     from text_humanization_module import TextHumanizer
     from ai_text_detection_module import AITextDetector
     from command_interface import CommandInterface
+    from bot_management_system import DirectorBot, BotCommand, BotStatus, BotType
+    from bot_management_system import AnalyzerBot, GeneratorBot, MonitorBot, BotSwarm
+    from bot_management_system import get_director_bot
     from bot_management_system import DirectorBot, BotCommand, BotStatus, BotType
     from bot_management_system import AnalyzerBot, GeneratorBot, MonitorBot, BotSwarm
     
@@ -54,6 +57,8 @@ logger = logging.getLogger(__name__)
 bot_interface = None
 uploaded_files = {}  # Track uploaded files by session
 director_bot = None
+websocket_server = None
+websocket_clients = set()
 
 # Configuration
 UPLOAD_FOLDER = tempfile.gettempdir()
@@ -69,6 +74,146 @@ def allowed_file(filename):
 def generate_session_id():
     """Generate a unique session ID."""
     return str(uuid.uuid4())
+
+def validate_json_request():
+    """Validate that request contains valid JSON."""
+    if not request.is_json:
+        return {'error': 'Content-Type must be application/json'}, 400
+    
+    data = request.get_json()
+    if data is None:
+        return {'error': 'Invalid JSON in request body'}, 400
+    
+    return data, None
+
+def validate_required_fields(data, required_fields):
+    """Validate that all required fields are present and not empty."""
+    for field in required_fields:
+        if field not in data:
+            return f"Missing required field: {field}"
+        if not data[field] or (isinstance(data[field], str) and not data[field].strip()):
+            return f"Field '{field}' cannot be empty"
+    return None
+
+async def broadcast_to_websockets(message):
+    """Broadcast message to all connected WebSocket clients."""
+    if not websocket_clients:
+        return
+    
+    message_str = json_module.dumps(message) if isinstance(message, dict) else str(message)
+    disconnected_clients = set()
+    
+    for client in websocket_clients.copy():
+        try:
+            await client.send(message_str)
+        except websockets.exceptions.ConnectionClosed:
+            disconnected_clients.add(client)
+        except Exception as e:
+            logger.error(f"WebSocket broadcast error: {e}")
+            disconnected_clients.add(client)
+    
+    # Remove disconnected clients
+    websocket_clients -= disconnected_clients
+
+async def websocket_handler(websocket, path):
+    """Handle WebSocket connections for real-time updates."""
+    websocket_clients.add(websocket)
+    logger.info(f"New WebSocket client connected. Total: {len(websocket_clients)}")
+    
+    try:
+        # Send initial status
+        initial_status = {
+            'type': 'connection_established',
+            'timestamp': datetime.now().isoformat(),
+            'client_count': len(websocket_clients)
+        }
+        await websocket.send(json_module.dumps(initial_status))
+        
+        # Handle incoming messages
+        async for message in websocket:
+            try:
+                data = json_module.loads(message)
+                # Handle WebSocket commands here if needed
+                logger.info(f"WebSocket message received: {data}")
+            except json_module.JSONDecodeError as e:
+                error_msg = {'type': 'error', 'message': f'Invalid JSON: {str(e)}'}
+                await websocket.send(json_module.dumps(error_msg))
+            except Exception as e:
+                error_msg = {'type': 'error', 'message': str(e)}
+                await websocket.send(json_module.dumps(error_msg))
+                
+    except websockets.exceptions.ConnectionClosed:
+        pass
+    except Exception as e:
+        logger.error(f"WebSocket error: {e}")
+    finally:
+        websocket_clients.discard(websocket)
+        logger.info(f"WebSocket client disconnected. Total: {len(websocket_clients)}")
+
+def start_websocket_server():
+    """Start WebSocket server in a separate thread."""
+    global websocket_server
+    
+    async def run_server():
+        global websocket_server
+        try:
+            websocket_server = await websockets.serve(
+                websocket_handler,
+                "localhost",
+                8765,
+                ping_interval=20,
+                ping_timeout=10
+            )
+            logger.info("🌐 WebSocket server started on ws://localhost:8765")
+            await websocket_server.wait_closed()
+        except Exception as e:
+            logger.error(f"WebSocket server error: {e}")
+    
+    def run_in_thread():
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            loop.run_until_complete(run_server())
+        except Exception as e:
+            logger.error(f"WebSocket thread error: {e}")
+        finally:
+            loop.close()
+    
+    websocket_thread = threading.Thread(target=run_in_thread, daemon=True)
+    websocket_thread.start()
+    logger.info("🚀 WebSocket server thread started")
+
+async def initialize_director_bot():
+    """Initialize Director Bot in async context."""
+    global director_bot
+    try:
+        if BOT_MODULES_AVAILABLE:
+            director_bot = get_director_bot()
+            await director_bot.start()
+            logger.info("✅ Director Bot initialized and started")
+            return True
+    except Exception as e:
+        logger.error(f"Failed to initialize Director Bot: {e}")
+        director_bot = None
+    return False
+
+def start_director_bot():
+    """Start Director Bot in a separate thread."""
+    def run_director():
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            loop.run_until_complete(initialize_director_bot())
+            # Keep the loop running for Director Bot operations
+            loop.run_forever()
+        except Exception as e:
+            logger.error(f"Director Bot thread error: {e}")
+        finally:
+            loop.close()
+    
+    director_thread = threading.Thread(target=run_director, daemon=True)
+    director_thread.start()
+    logger.info("🤖 Director Bot thread started")
 
 def initialize_bot_modules():
     """Initialize all bot modules with comprehensive error handling."""
@@ -120,14 +265,9 @@ def initialize_bot_modules():
         
         logger.info("🎉 Bot modules initialized successfully!")
         
-        # Initialize Director Bot for management system
-        try:
-            from bot_management_system import get_director_bot, BotCommand
-            director_bot = get_director_bot()
-            logger.info("✅ Director Bot initialized for management system")
-        except Exception as e:
-            logger.warning(f"⚠️  Could not initialize Director Bot: {e}")
-            director_bot = None
+        # Start Director Bot and WebSocket server
+        start_director_bot()
+        start_websocket_server()
         
         return True
         
@@ -158,7 +298,7 @@ def health_check():
         health_status = {
             'timestamp': datetime.now().isoformat(),
             'api_status': 'healthy',
-            'modules_available': MODULES_AVAILABLE,
+            'modules_available': BOT_MODULES_AVAILABLE,
             'bot_initialized': bot_interface is not None
         }
         
@@ -191,7 +331,7 @@ def initialize_modules():
         return jsonify({
             'success': success,
             'message': 'Bot modules initialized successfully' if success else 'Failed to initialize bot modules',
-            'modules_available': MODULES_AVAILABLE,
+            'modules_available': BOT_MODULES_AVAILABLE,
             'timestamp': datetime.now().isoformat()
         })
     except Exception as e:
@@ -208,6 +348,9 @@ def upload_file():
         file = request.files['file']
         if file.filename == '':
             return jsonify({'error': 'No file selected'}), 400
+        
+        if not file.filename or not file.filename.strip():
+            return jsonify({'error': 'Invalid filename'}), 400
         
         if not allowed_file(file.filename):
             return jsonify({'error': f'File type not allowed. Allowed: {", ".join(ALLOWED_EXTENSIONS)}'}), 400
@@ -230,6 +373,15 @@ def upload_file():
         uploaded_files[session_id] = file_info
         
         logger.info(f"File uploaded: {filename} -> {filepath}")
+        
+        # Broadcast file upload event
+        asyncio.create_task(broadcast_to_websockets({
+            'type': 'file_uploaded',
+            'filename': filename,
+            'session_id': session_id,
+            'timestamp': datetime.now().isoformat()
+        }))
+        
         return jsonify({
             'success': True,
             'session_id': session_id,
@@ -251,10 +403,17 @@ def handle_generic_command():
 def analyze_code_structure():
     """Analyze code structure of uploaded file."""
     try:
-        data = request.get_json()
+        data, error = validate_json_request()
+        if error:
+            return jsonify(error[0]), error[1]
+        
+        validation_error = validate_required_fields(data, ['session_id'])
+        if validation_error:
+            return jsonify({'error': validation_error}), 400
+        
         session_id = data.get('session_id')
         
-        if not session_id or session_id not in uploaded_files:
+        if session_id not in uploaded_files:
             return jsonify({'error': 'Invalid session ID or file not found'}), 400
         
         filepath = uploaded_files[session_id]['filepath']
@@ -268,10 +427,17 @@ def analyze_code_structure():
 def analyze_code_quality():
     """Analyze code quality of uploaded file."""
     try:
-        data = request.get_json()
+        data, error = validate_json_request()
+        if error:
+            return jsonify(error[0]), error[1]
+        
+        validation_error = validate_required_fields(data, ['session_id'])
+        if validation_error:
+            return jsonify({'error': validation_error}), 400
+        
         session_id = data.get('session_id')
         
-        if not session_id or session_id not in uploaded_files:
+        if session_id not in uploaded_files:
             return jsonify({'error': 'Invalid session ID or file not found'}), 400
         
         filepath = uploaded_files[session_id]['filepath']
@@ -285,13 +451,17 @@ def analyze_code_quality():
 def generate_code():
     """Generate code using templates."""
     try:
-        data = request.get_json()
+        data, error = validate_json_request()
+        if error:
+            return jsonify(error[0]), error[1]
+        
+        validation_error = validate_required_fields(data, ['code_type', 'name'])
+        if validation_error:
+            return jsonify({'error': validation_error}), 400
+        
         code_type = data.get('code_type')
         name = data.get('name')
         params = data.get('params', {})
-        
-        if not code_type or not name:
-            return jsonify({'error': 'code_type and name are required'}), 400
         
         # Build arguments
         args = [code_type, name]
@@ -308,10 +478,17 @@ def generate_code():
 def generate_tests():
     """Generate unit tests for uploaded file."""
     try:
-        data = request.get_json()
+        data, error = validate_json_request()
+        if error:
+            return jsonify(error[0]), error[1]
+        
+        validation_error = validate_required_fields(data, ['session_id'])
+        if validation_error:
+            return jsonify({'error': validation_error}), 400
+        
         session_id = data.get('session_id')
         
-        if not session_id or session_id not in uploaded_files:
+        if session_id not in uploaded_files:
             return jsonify({'error': 'Invalid session ID or file not found'}), 400
         
         filepath = uploaded_files[session_id]['filepath']
@@ -325,16 +502,20 @@ def generate_tests():
 def refactor_code():
     """Refactor code using various techniques."""
     try:
-        data = request.get_json()
+        data, error = validate_json_request()
+        if error:
+            return jsonify(error[0]), error[1]
+        
+        validation_error = validate_required_fields(data, ['session_id', 'refactor_type'])
+        if validation_error:
+            return jsonify({'error': validation_error}), 400
+        
         session_id = data.get('session_id')
         refactor_type = data.get('refactor_type')
         params = data.get('params', {})
         
-        if not session_id or session_id not in uploaded_files:
+        if session_id not in uploaded_files:
             return jsonify({'error': 'Invalid session ID or file not found'}), 400
-        
-        if not refactor_type:
-            return jsonify({'error': 'refactor_type is required'}), 400
         
         filepath = uploaded_files[session_id]['filepath']
         
@@ -353,10 +534,17 @@ def refactor_code():
 def auto_fix_issues():
     """Automatically fix common code issues."""
     try:
-        data = request.get_json()
+        data, error = validate_json_request()
+        if error:
+            return jsonify(error[0]), error[1]
+        
+        validation_error = validate_required_fields(data, ['session_id'])
+        if validation_error:
+            return jsonify({'error': validation_error}), 400
+        
         session_id = data.get('session_id')
         
-        if not session_id or session_id not in uploaded_files:
+        if session_id not in uploaded_files:
             return jsonify({'error': 'Invalid session ID or file not found'}), 400
         
         filepath = uploaded_files[session_id]['filepath']
@@ -370,11 +558,15 @@ def auto_fix_issues():
 def humanize_text():
     """Humanize text using AI."""
     try:
-        data = request.get_json()
-        text = data.get('text')
+        data, error = validate_json_request()
+        if error:
+            return jsonify(error[0]), error[1]
         
-        if not text:
-            return jsonify({'error': 'text is required'}), 400
+        validation_error = validate_required_fields(data, ['text'])
+        if validation_error:
+            return jsonify({'error': validation_error}), 400
+        
+        text = data.get('text')
         
         return _execute_bot_command('humanize_text', [text])
         
@@ -386,11 +578,15 @@ def humanize_text():
 def detect_ai_text():
     """Detect if text is AI-generated."""
     try:
-        data = request.get_json()
-        text = data.get('text')
+        data, error = validate_json_request()
+        if error:
+            return jsonify(error[0]), error[1]
         
-        if not text:
-            return jsonify({'error': 'text is required'}), 400
+        validation_error = validate_required_fields(data, ['text'])
+        if validation_error:
+            return jsonify({'error': validation_error}), 400
+        
+        text = data.get('text')
         
         return _execute_bot_command('detect_ai_text', [text])
         
@@ -484,6 +680,15 @@ def delete_uploaded_file(session_id):
 
 # Bot Management API Routes
 
+@app.route('/api/websocket-info', methods=['GET'])
+def websocket_info():
+    """Get WebSocket server information."""
+    return jsonify({
+        'websocket_url': 'ws://localhost:8765',
+        'connected_clients': len(websocket_clients),
+        'server_running': websocket_server is not None
+    })
+
 @app.route('/api/bots', methods=['GET'])
 def list_all_bots():
     """List all bots managed by Director Bot"""
@@ -491,7 +696,11 @@ def list_all_bots():
         if not director_bot:
             return jsonify({'error': 'Director Bot not available'}), 503
         
+        if not BOT_MODULES_AVAILABLE:
+            return jsonify({'error': 'Bot modules not available'}), 503
+        
         # Create command to list bots
+        from bot_management_system import BotCommand
         command = BotCommand(
             command_id=str(uuid.uuid4()),
             command_type='list_bots'
@@ -522,10 +731,17 @@ def create_bot():
         if not director_bot:
             return jsonify({'error': 'Director Bot not available'}), 503
         
-        data = request.get_json()
+        if not BOT_MODULES_AVAILABLE:
+            return jsonify({'error': 'Bot modules not available'}), 503
+        
+        data, error = validate_json_request()
+        if error:
+            return jsonify(error[0]), error[1]
+        
         bot_type = data.get('bot_type', 'custom')
         bot_name = data.get('name', f'{bot_type}_bot')
         
+        from bot_management_system import BotCommand
         command = BotCommand(
             command_id=str(uuid.uuid4()),
             command_type='create_bot',
