@@ -1037,6 +1037,14 @@ def _execute_bot_command(command, args):
         # Execute command
         result = bot_interface.process_command(command_str)
         
+        # Broadcast command execution event
+        asyncio.create_task(broadcast_to_websockets({
+            'type': 'command_executed',
+            'command': command_str,
+            'result': result[:200] + '...' if len(result) > 200 else result,
+            'timestamp': datetime.now().isoformat()
+        }))
+        
         return jsonify({
             'success': True,
             'result': result,
