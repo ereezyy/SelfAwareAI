@@ -15,13 +15,14 @@ import logging
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Initialize Flask app
+app = Flask(__name__)
+CORS(app)
+
 # Global process tracking
 running_processes = {}
-
-@app.route('/')
-def serve_index():
-    """Serve the main index.html file"""
-    return send_from_directory('.', 'index.html')
 
 @app.route('/api/backend/status')
 def get_backend_status():
