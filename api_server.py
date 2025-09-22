@@ -464,6 +464,293 @@ def delete_uploaded_file(session_id):
         logger.error(f"File deletion failed: {e}")
         return jsonify({'error': str(e)}), 500
 
+# Bot Management API Routes
+
+@app.route('/api/bots', methods=['GET'])
+def list_all_bots():
+    """List all bots managed by Director Bot"""
+    try:
+        if not director_bot:
+            return jsonify({'error': 'Director Bot not available'}), 503
+        
+        # Create command to list bots
+        command = BotCommand(
+            command_id=str(uuid.uuid4()),
+            command_type='list_bots'
+        )
+        
+        # Execute command synchronously (we'll need async support for better implementation)
+        import asyncio
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        try:
+            result = loop.run_until_complete(director_bot.execute_command(command))
+            return jsonify({
+                'success': True,
+                'data': result
+            })
+        finally:
+            loop.close()
+            
+    except Exception as e:
+        logger.error(f"List bots failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/bots', methods=['POST'])
+def create_bot():
+    """Create a new bot"""
+    try:
+        if not director_bot:
+            return jsonify({'error': 'Director Bot not available'}), 503
+        
+        data = request.get_json()
+        bot_type = data.get('bot_type', 'custom')
+        bot_name = data.get('name', f'{bot_type}_bot')
+        
+        command = BotCommand(
+            command_id=str(uuid.uuid4()),
+            command_type='create_bot',
+            parameters={
+                'bot_type': bot_type,
+                'name': bot_name
+            }
+        )
+        
+        import asyncio
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        try:
+            result = loop.run_until_complete(director_bot.execute_command(command))
+            return jsonify({
+                'success': True,
+                'data': result
+            })
+        finally:
+            loop.close()
+            
+    except Exception as e:
+        logger.error(f"Create bot failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/bots/<bot_id>/start', methods=['POST'])
+def start_bot(bot_id):
+    """Start a specific bot"""
+    try:
+        if not director_bot:
+            return jsonify({'error': 'Director Bot not available'}), 503
+        
+        command = BotCommand(
+            command_id=str(uuid.uuid4()),
+            command_type='start_bot',
+            parameters={'bot_id': bot_id}
+        )
+        
+        import asyncio
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        try:
+            result = loop.run_until_complete(director_bot.execute_command(command))
+            return jsonify({
+                'success': True,
+                'data': result
+            })
+        finally:
+            loop.close()
+            
+    except Exception as e:
+        logger.error(f"Start bot failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/bots/<bot_id>/stop', methods=['POST'])
+def stop_bot(bot_id):
+    """Stop a specific bot"""
+    try:
+        if not director_bot:
+            return jsonify({'error': 'Director Bot not available'}), 503
+        
+        command = BotCommand(
+            command_id=str(uuid.uuid4()),
+            command_type='stop_bot',
+            parameters={'bot_id': bot_id}
+        )
+        
+        import asyncio
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        try:
+            result = loop.run_until_complete(director_bot.execute_command(command))
+            return jsonify({
+                'success': True,
+                'data': result
+            })
+        finally:
+            loop.close()
+            
+    except Exception as e:
+        logger.error(f"Stop bot failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/swarms', methods=['GET'])
+def list_swarms():
+    """List all swarms"""
+    try:
+        if not director_bot:
+            return jsonify({'error': 'Director Bot not available'}), 503
+        
+        command = BotCommand(
+            command_id=str(uuid.uuid4()),
+            command_type='list_swarms'
+        )
+        
+        import asyncio
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        try:
+            result = loop.run_until_complete(director_bot.execute_command(command))
+            return jsonify({
+                'success': True,
+                'data': result
+            })
+        finally:
+            loop.close()
+            
+    except Exception as e:
+        logger.error(f"List swarms failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/swarms', methods=['POST'])
+def create_swarm():
+    """Create a new swarm"""
+    try:
+        if not director_bot:
+            return jsonify({'error': 'Director Bot not available'}), 503
+        
+        data = request.get_json()
+        swarm_name = data.get('name', 'New Swarm')
+        template = data.get('template')
+        config = data.get('config', {})
+        
+        command = BotCommand(
+            command_id=str(uuid.uuid4()),
+            command_type='create_swarm',
+            parameters={
+                'name': swarm_name,
+                'template': template,
+                'config': config
+            }
+        )
+        
+        import asyncio
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        try:
+            result = loop.run_until_complete(director_bot.execute_command(command))
+            return jsonify({
+                'success': True,
+                'data': result
+            })
+        finally:
+            loop.close()
+            
+    except Exception as e:
+        logger.error(f"Create swarm failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/swarms/<swarm_id>/start', methods=['POST'])
+def start_swarm(swarm_id):
+    """Start all bots in a swarm"""
+    try:
+        if not director_bot:
+            return jsonify({'error': 'Director Bot not available'}), 503
+        
+        command = BotCommand(
+            command_id=str(uuid.uuid4()),
+            command_type='start_swarm',
+            parameters={'swarm_id': swarm_id}
+        )
+        
+        import asyncio
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        try:
+            result = loop.run_until_complete(director_bot.execute_command(command))
+            return jsonify({
+                'success': True,
+                'data': result
+            })
+        finally:
+            loop.close()
+            
+    except Exception as e:
+        logger.error(f"Start swarm failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/swarms/<swarm_id>/stop', methods=['POST'])
+def stop_swarm(swarm_id):
+    """Stop all bots in a swarm"""
+    try:
+        if not director_bot:
+            return jsonify({'error': 'Director Bot not available'}), 503
+        
+        command = BotCommand(
+            command_id=str(uuid.uuid4()),
+            command_type='stop_swarm',
+            parameters={'swarm_id': swarm_id}
+        )
+        
+        import asyncio
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        try:
+            result = loop.run_until_complete(director_bot.execute_command(command))
+            return jsonify({
+                'success': True,
+                'data': result
+            })
+        finally:
+            loop.close()
+            
+    except Exception as e:
+        logger.error(f"Stop swarm failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/bot-status', methods=['GET'])
+def get_bot_management_status():
+    """Get comprehensive bot management status"""
+    try:
+        if not director_bot:
+            return jsonify({'error': 'Director Bot not available'}), 503
+        
+        command = BotCommand(
+            command_id=str(uuid.uuid4()),
+            command_type='get_status'
+        )
+        
+        import asyncio
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        try:
+            result = loop.run_until_complete(director_bot.execute_command(command))
+            return jsonify({
+                'success': True,
+                'data': result
+            })
+        finally:
+            loop.close()
+            
+    except Exception as e:
+        logger.error(f"Get bot status failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
 # Helper functions
 
 def _process_command_request():
