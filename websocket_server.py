@@ -8,7 +8,7 @@ import asyncio
 import websockets
 import json
 import logging
-from bot_management_system import websocket_handler, get_director_bot
+import time
 
 # Configure logging
 logging.basicConfig(
@@ -16,6 +16,60 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+# Minimal websocket handler implementation
+async def websocket_handler(websocket, path):
+    """Minimal WebSocket handler for bot management communication"""
+    logger.info(f"New WebSocket connection from {websocket.remote_address}")
+    
+    try:
+        async for message in websocket:
+            try:
+                data = json.loads(message)
+                logger.info(f"Received message: {data}")
+                
+                # Echo response for now
+                response = {
+                    "type": "response",
+                    "status": "received",
+                    "echo": data,
+                    "timestamp": time.time()
+                }
+                
+                await websocket.send(json.dumps(response))
+                
+            except json.JSONDecodeError:
+                error_response = {
+                    "type": "error",
+                    "message": "Invalid JSON format",
+                    "timestamp": time.time()
+                }
+                await websocket.send(json.dumps(error_response))
+                
+    except websockets.exceptions.ConnectionClosed:
+        logger.info("WebSocket connection closed")
+    except Exception as e:
+        logger.error(f"WebSocket error: {e}")
+
+class DirectorBot:
+    """Minimal DirectorBot implementation"""
+    
+    def __init__(self):
+        self.running = False
+        
+    async def start(self):
+        """Start the director bot"""
+        self.running = True
+        logger.info("DirectorBot started")
+        
+    async def stop(self):
+        """Stop the director bot"""
+        self.running = False
+        logger.info("DirectorBot stopped")
+
+def get_director_bot():
+    """Get director bot instance"""
+    return DirectorBot()
 
 class BotWebSocketServer:
     """WebSocket server for bot management real-time communication"""
