@@ -469,18 +469,6 @@
                     </div>
                 </div>
                 
-                <div class="service-control stopped" id="botmanagement-service">
-                    <div class="service-info">
-                        <div class="status-indicator stopped"></div>
-                        <div>
-                            <div class="service-name">Bot Management</div>
-                            <div class="service-description">Bot orchestration system</div>
-                        </div>
-                    </div>
-                    <div class="service-actions">
-                        <button class="btn" onclick="startService('bot_management')">Start</button>
-                        <button class="btn danger" onclick="stopService('bot_management')" disabled>Stop</button>
-                        <button class="btn warning" onclick="restartService('bot_management')">Restart</button>
                     </div>
                 </div>
             </div>
@@ -1255,7 +1243,6 @@
         function showLoading(buttonId) {
             const button = document.getElementById(buttonId);
             if (button) {
-                const button = document.querySelector(`button[onclick="restartService('${serviceName}')"]`);
                 button.innerHTML = '<span class="loading"></span>Processing...';
                 button.disabled = true;
             }
