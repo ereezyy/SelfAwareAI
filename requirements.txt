@@ -8,3 +8,5 @@ protobuf>=3.20.0
 
 # Optional for enhanced functionality
 numpy>=1.21.0
+autopep8>=1.6.0
+black>=22.0.0

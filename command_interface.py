@@ -46,6 +46,11 @@ class CommandInterface:
             "update_file_content": self._handle_update_file_content,
             "append_to_file": self._handle_append_to_file,
             "analyze_code": self._handle_analyze_code,
+            "analyze_quality": self._handle_analyze_quality,
+            "generate_code": self._handle_generate_code,
+            "refactor_code": self._handle_refactor_code,
+            "auto_fix": self._handle_auto_fix,
+            "generate_tests": self._handle_generate_tests,
             "patch_code": self._handle_patch_code,
             "modify_config": self._handle_modify_config,
             "run_python_script": self._handle_run_python_script,
@@ -171,6 +176,174 @@ class CommandInterface:
                     self.healing_module.handle_error(e, {"operation": "analyze_code", "filepath": filepath})
                 return f"Error analyzing code: {e}"
         return "Error: SelfCodingModule not available for code analysis."
+
+    def _handle_analyze_quality(self, args):
+        """Performs comprehensive code quality analysis (requires SelfCodingModule). Usage: analyze_quality <filepath>"""
+        if not args:
+            return "Error: Missing filepath. Usage: analyze_quality <filepath>"
+        filepath = args[0]
+        if self.coding_module:
+            abs_filepath = os.path.abspath(filepath)
+            if not os.path.exists(abs_filepath):
+                return f"Error: File {abs_filepath} not found for analysis."
+            try:
+                analysis_result = self.coding_module.analyze_code_quality(abs_filepath)
+                if "error" in analysis_result:
+                    return f"Error analyzing code quality: {analysis_result['error']}"
+                
+                # Format the results nicely
+                report = f"Code Quality Analysis for {abs_filepath}:\n"
+                report += f"Lines of code: {analysis_result.get('line_count', 'N/A')}\n"
+                report += f"Complexity score: {analysis_result.get('complexity_score', 'N/A')}\n"
+                report += f"Issues found: {len(analysis_result.get('issues', []))}\n"
+                report += f"Suggestions: {len(analysis_result.get('suggestions', []))}\n\n"
+                
+                # List issues
+                if analysis_result.get("issues"):
+                    report += "Issues:\n"
+                    for issue in analysis_result["issues"][:10]:  # Show first 10 issues
+                        report += f"  Line {issue.get('line', '?')}: {issue.get('message', 'Unknown issue')} ({issue.get('severity', 'unknown')})\n"
+                    if len(analysis_result["issues"]) > 10:
+                        report += f"  ... and {len(analysis_result['issues']) - 10} more issues\n"
+                    report += "\n"
+                
+                # List suggestions
+                if analysis_result.get("suggestions"):
+                    report += "Suggestions:\n"
+                    for suggestion in analysis_result["suggestions"][:5]:  # Show first 5 suggestions
+                        report += f"  - {suggestion.get('message', 'Unknown suggestion')}\n"
+                    if len(analysis_result["suggestions"]) > 5:
+                        report += f"  ... and {len(analysis_result['suggestions']) - 5} more suggestions\n"
+                
+                return report
+            except Exception as e:
+                self.logger.error(f"Error during quality analysis via coding module: {e}")
+                if self.healing_module:
+                    self.healing_module.handle_error(e, {"operation": "analyze_quality", "filepath": filepath})
+                return f"Error analyzing code quality: {e}"
+        return "Error: SelfCodingModule not available for quality analysis."
+    
+    def _handle_generate_code(self, args):
+        """Generates code using templates (requires SelfCodingModule). Usage: generate_code <type> <name> [params...]"""
+        if len(args) < 2:
+            return "Error: Insufficient arguments. Usage: generate_code <type> <name> [params...]\nAvailable types: class_basic, singleton, context_manager, api_client, unit_test"
+        
+        code_type = args[0]
+        name = args[1]
+        
+        if self.coding_module:
+            try:
+                # Parse additional parameters
+                params = {"class_name": name}
+                for i in range(2, len(args), 2):
+                    if i + 1 < len(args):
+                        params[args[i]] = args[i + 1]
+                
+                generated_code = self.coding_module.generate_advanced_code(code_type, **params)
+                return f"Generated {code_type} code:\n\n{generated_code}"
+            except Exception as e:
+                self.logger.error(f"Error during code generation via coding module: {e}")
+                if self.healing_module:
+                    self.healing_module.handle_error(e, {"operation": "generate_code", "type": code_type})
+                return f"Error generating code: {e}"
+        return "Error: SelfCodingModule not available for code generation."
+    
+    def _handle_refactor_code(self, args):
+        """Refactors code using various techniques (requires SelfCodingModule). Usage: refactor_code <filepath> <type> [params...]"""
+        if len(args) < 2:
+            return "Error: Insufficient arguments. Usage: refactor_code <filepath> <type> [params...]\nAvailable types: format_with_black, format_with_autopep8, add_docstrings"
+        
+        filepath = args[0]
+        refactor_type = args[1]
+        
+        if self.coding_module:
+            abs_filepath = os.path.abspath(filepath)
+            if not os.path.exists(abs_filepath):
+                return f"Error: File {abs_filepath} not found for refactoring."
+            try:
+                # Parse additional parameters
+                params = {}
+                for i in range(2, len(args), 2):
+                    if i + 1 < len(args):
+                        params[args[i]] = args[i + 1]
+                
+                success = self.coding_module.refactor_code(abs_filepath, refactor_type, **params)
+                if success:
+                    return f"Successfully refactored {abs_filepath} using {refactor_type}"
+                return f"Failed to refactor {abs_filepath}. Check logs for details."
+            except Exception as e:
+                self.logger.error(f"Error during code refactoring via coding module: {e}")
+                if self.healing_module:
+                    self.healing_module.handle_error(e, {"operation": "refactor_code", "filepath": filepath})
+                return f"Error refactoring code: {e}"
+        return "Error: SelfCodingModule not available for code refactoring."
+    
+    def _handle_auto_fix(self, args):
+        """Automatically fixes common code issues (requires SelfCodingModule). Usage: auto_fix <filepath>"""
+        if not args:
+            return "Error: Missing filepath. Usage: auto_fix <filepath>"
+        filepath = args[0]
+        if self.coding_module:
+            abs_filepath = os.path.abspath(filepath)
+            if not os.path.exists(abs_filepath):
+                return f"Error: File {abs_filepath} not found for auto-fixing."
+            try:
+                fix_result = self.coding_module.auto_fix_issues(abs_filepath)
+                if "error" in fix_result:
+                    return f"Error auto-fixing: {fix_result['error']}"
+                
+                if fix_result.get("success"):
+                    fixes = fix_result.get("fixes_applied", [])
+                    remaining = fix_result.get("remaining_issues", 0)
+                    report = f"Auto-fix completed for {abs_filepath}:\n"
+                    if fixes:
+                        report += "Fixes applied:\n"
+                        for fix in fixes:
+                            report += f"  - {fix}\n"
+                    else:
+                        report += "No automatic fixes were applied.\n"
+                    report += f"Remaining issues: {remaining}"
+                    return report
+                else:
+                    return f"Auto-fix failed for {abs_filepath}"
+            except Exception as e:
+                self.logger.error(f"Error during auto-fix via coding module: {e}")
+                if self.healing_module:
+                    self.healing_module.handle_error(e, {"operation": "auto_fix", "filepath": filepath})
+                return f"Error auto-fixing: {e}"
+        return "Error: SelfCodingModule not available for auto-fixing."
+    
+    def _handle_generate_tests(self, args):
+        """Generates unit tests for a Python file (requires SelfCodingModule). Usage: generate_tests <filepath>"""
+        if not args:
+            return "Error: Missing filepath. Usage: generate_tests <filepath>"
+        filepath = args[0]
+        if self.coding_module:
+            abs_filepath = os.path.abspath(filepath)
+            if not os.path.exists(abs_filepath):
+                return f"Error: File {abs_filepath} not found for test generation."
+            try:
+                test_code = self.coding_module.generate_unit_tests(abs_filepath)
+                if test_code.startswith("# Error"):
+                    return f"Error generating tests: {test_code}"
+                
+                # Save the test file
+                test_filename = f"test_{os.path.basename(abs_filepath)}"
+                test_filepath = os.path.join(os.path.dirname(abs_filepath), test_filename)
+                
+                try:
+                    with open(test_filepath, 'w') as f:
+                        f.write(test_code)
+                    return f"Generated unit tests and saved to {test_filepath}\n\nGenerated test code:\n{test_code[:500]}{'...' if len(test_code) > 500 else ''}"
+                except Exception as save_error:
+                    return f"Generated test code but failed to save to file: {save_error}\n\nGenerated code:\n{test_code[:500]}{'...' if len(test_code) > 500 else ''}"
+                
+            except Exception as e:
+                self.logger.error(f"Error during test generation via coding module: {e}")
+                if self.healing_module:
+                    self.healing_module.handle_error(e, {"operation": "generate_tests", "filepath": filepath})
+                return f"Error generating tests: {e}"
+        return "Error: SelfCodingModule not available for test generation."
 
     def _handle_patch_code(self, args):
         """Applies a simple string patch to a file (requires SelfCodingModule). Usage: patch_code <filepath> \"<old_string>\" \"<new_string>\""""
