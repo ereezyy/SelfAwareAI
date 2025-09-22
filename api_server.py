@@ -216,7 +216,6 @@ def stop_service(service):
                 'error': 'Cannot stop API server from itself'
             }), 400
         
-        elif service in ['websocket', 'bot_management']:
         elif service == 'websocket':
             script_name = 'websocket_server.py'
             
