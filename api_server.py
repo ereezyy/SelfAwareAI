@@ -102,23 +102,6 @@ bot_interface = None
 backend_processes = {
     'websocket_server': None,
     'bot_management': None
-# WebSocket integration
-try:
-    import asyncio
-    import websockets
-    import threading
-    from websockets.server import serve
-    WEBSOCKET_INTEGRATION = True
-    logger.info("✅ WebSocket integration available")
-except ImportError as e:
-    logger.error(f"❌ WebSocket integration not available: {e}")
-    WEBSOCKET_INTEGRATION = False
-
-# Global WebSocket state
-websocket_clients = set()
-websocket_server = None
-websocket_thread = None
-
 }
 uploaded_files = {}  # Track uploaded files by session
 director_bot = None
@@ -603,6 +586,9 @@ def initialize_bot_modules():
         return initialization_status
         
     except Exception as e:
+        logger.error(f"Critical error during bot modules initialization: {e}\n{traceback.format_exc()}")
+        initialization_status['errors'].append(f"Critical initialization error: {str(e)}")
+        return initialization_status
 
 # Static file serving
 @app.route('/')
@@ -685,68 +671,68 @@ def initialize_modules():
 @handle_api_errors
 def upload_file():
     """Handle file uploads with proper validation and storage."""
-        if 'file' not in request.files:
-            raise ValueError('No file provided in request')
+    if 'file' not in request.files:
+        raise ValueError('No file provided in request')
+    
+    file = request.files['file']
+    if file.filename == '':
+        raise ValueError('No file selected')
+    
+    if not file.filename or not file.filename.strip():
+        raise ValueError('Invalid filename')
+    
+    if not allowed_file(file.filename):
+        raise ValueError(f'File type not allowed. Allowed: {", ".join(ALLOWED_EXTENSIONS)}')
+    
+    # Check file size
+    file.seek(0, 2)  # Seek to end
+    file_size = file.tell()
+    file.seek(0)     # Reset to beginning
+    
+    if file_size > MAX_CONTENT_LENGTH:
+        raise ValueError(f'File too large. Maximum size: {MAX_CONTENT_LENGTH // (1024*1024)}MB')
+    
+    # Generate secure filename and session ID
+    filename = secure_filename(file.filename)
+    if not filename:
+        raise ValueError('Invalid filename after sanitization')
         
-        file = request.files['file']
-        if file.filename == '':
-            raise ValueError('No file selected')
-        
-        if not file.filename or not file.filename.strip():
-            raise ValueError('Invalid filename')
-        
-        if not allowed_file(file.filename):
-            raise ValueError(f'File type not allowed. Allowed: {", ".join(ALLOWED_EXTENSIONS)}')
-        
-        # Check file size
-        file.seek(0, 2)  # Seek to end
-        file_size = file.tell()
-        file.seek(0)     # Reset to beginning
-        
-        if file_size > MAX_CONTENT_LENGTH:
-            raise ValueError(f'File too large. Maximum size: {MAX_CONTENT_LENGTH // (1024*1024)}MB')
-        
-        # Generate secure filename and session ID
-        filename = secure_filename(file.filename)
-        if not filename:
-            raise ValueError('Invalid filename after sanitization')
-            
-        session_id = generate_session_id()
-        filepath = os.path.join(UPLOAD_FOLDER, f"{session_id}_{filename}")
-        
-        # Ensure upload directory exists
-        os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-        
-        # Save file
-        file.save(filepath)
-        
-        # Store file info in session
-        file_info = {
-            'original_name': filename,
-            'filepath': filepath,
-            'upload_time': datetime.now().isoformat(),
-            'size': file_size
-        }
-        uploaded_files[session_id] = file_info
-        
-        logger.info(f"File uploaded: {filename} -> {filepath}")
-        
-        # Broadcast file upload event
-        broadcast_to_websockets({
-            'type': 'file_uploaded',
-            'filename': filename,
-            'session_id': session_id,
-            'timestamp': datetime.now().isoformat(),
-            'size': file_size
-        })
-        
-        return jsonify({
-            'success': True,
-            'session_id': session_id,
-            'filename': filename,
-            'message': f'File {filename} uploaded successfully',
-            'file_info': file_info
-        })
+    session_id = generate_session_id()
+    filepath = os.path.join(UPLOAD_FOLDER, f"{session_id}_{filename}")
+    
+    # Ensure upload directory exists
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+    
+    # Save file
+    file.save(filepath)
+    
+    # Store file info in session
+    file_info = {
+        'original_name': filename,
+        'filepath': filepath,
+        'upload_time': datetime.now().isoformat(),
+        'size': file_size
+    }
+    uploaded_files[session_id] = file_info
+    
+    logger.info(f"File uploaded: {filename} -> {filepath}")
+    
+    # Broadcast file upload event
+    broadcast_to_websockets({
+        'type': 'file_uploaded',
+        'filename': filename,
+        'session_id': session_id,
+        'timestamp': datetime.now().isoformat(),
+        'size': file_size
+    })
+    
+    return jsonify({
+        'success': True,
+        'session_id': session_id,
+        'filename': filename,
+        'message': f'File {filename} uploaded successfully',
+        'file_info': file_info
+    })
 
 @app.route('/api/command', methods=['POST'])
 @require_modules('bot_modules')
@@ -760,104 +746,104 @@ def handle_generic_command():
 @handle_api_errors
 def analyze_code_structure():
     """Analyze code structure of uploaded file."""
-        data, error = validate_json_request()
-        if error:
-            raise ValueError(error[0]['error'])
+    data, error = validate_json_request()
+    if error:
+        raise ValueError(error[0]['error'])
+    
+    validation_error = validate_required_fields(data, ['session_id'], {'session_id': str})
+    if validation_error:
+        raise ValueError(validation_error)
+    
+    session_id = data.get('session_id')
+    
+    if session_id not in uploaded_files:
+        raise ValueError('Invalid session ID or file not found')
+    
+    filepath = uploaded_files[session_id]['filepath']
+    if not os.path.exists(filepath):
+        raise FileNotFoundError(f'Uploaded file no longer exists: {filepath}')
         
-        validation_error = validate_required_fields(data, ['session_id'], {'session_id': str})
-        if validation_error:
-            raise ValueError(validation_error)
-        
-        session_id = data.get('session_id')
-        
-        if session_id not in uploaded_files:
-            raise ValueError('Invalid session ID or file not found')
-        
-        filepath = uploaded_files[session_id]['filepath']
-        if not os.path.exists(filepath):
-            raise FileNotFoundError(f'Uploaded file no longer exists: {filepath}')
-            
-        return _execute_bot_command('analyze_code', [filepath])
+    return _execute_bot_command('analyze_code', [filepath])
 
 @app.route('/api/analyze/quality', methods=['POST'])
 @require_modules('bot_modules')
 @handle_api_errors
 def analyze_code_quality():
     """Analyze code quality of uploaded file."""
-        data, error = validate_json_request()
-        if error:
-            raise ValueError(error[0]['error'])
+    data, error = validate_json_request()
+    if error:
+        raise ValueError(error[0]['error'])
+    
+    validation_error = validate_required_fields(data, ['session_id'], {'session_id': str})
+    if validation_error:
+        raise ValueError(validation_error)
+    
+    session_id = data.get('session_id')
+    
+    if session_id not in uploaded_files:
+        raise ValueError('Invalid session ID or file not found')
+    
+    filepath = uploaded_files[session_id]['filepath']
+    if not os.path.exists(filepath):
+        raise FileNotFoundError(f'Uploaded file no longer exists: {filepath}')
         
-        validation_error = validate_required_fields(data, ['session_id'], {'session_id': str})
-        if validation_error:
-            raise ValueError(validation_error)
-        
-        session_id = data.get('session_id')
-        
-        if session_id not in uploaded_files:
-            raise ValueError('Invalid session ID or file not found')
-        
-        filepath = uploaded_files[session_id]['filepath']
-        if not os.path.exists(filepath):
-            raise FileNotFoundError(f'Uploaded file no longer exists: {filepath}')
-            
-        return _execute_bot_command('analyze_quality', [filepath])
+    return _execute_bot_command('analyze_quality', [filepath])
 
 @app.route('/api/generate/code', methods=['POST'])
 @require_modules('bot_modules')
 @handle_api_errors
 def generate_code():
     """Generate code using templates."""
-        data, error = validate_json_request()
-        if error:
-            raise ValueError(error[0]['error'])
-        
-        validation_error = validate_required_fields(data, ['code_type', 'name'], {
-            'code_type': str,
-            'name': str
-        })
-        if validation_error:
-            raise ValueError(validation_error)
-        
-        code_type = data.get('code_type')
-        name = data.get('name')
-        params = data.get('params', {})
-        
-        # Validate code_type
-        valid_code_types = ['class_basic', 'singleton', 'context_manager', 'api_client', 'unit_test']
-        if code_type not in valid_code_types:
-            raise ValueError(f'Invalid code_type. Must be one of: {", ".join(valid_code_types)}')
-        
-        # Build arguments
-        args = [code_type, name]
-        for key, value in params.items():
-            args.extend([key, value])
-        
-        return _execute_bot_command('generate_code', args)
+    data, error = validate_json_request()
+    if error:
+        raise ValueError(error[0]['error'])
+    
+    validation_error = validate_required_fields(data, ['code_type', 'name'], {
+        'code_type': str,
+        'name': str
+    })
+    if validation_error:
+        raise ValueError(validation_error)
+    
+    code_type = data.get('code_type')
+    name = data.get('name')
+    params = data.get('params', {})
+    
+    # Validate code_type
+    valid_code_types = ['class_basic', 'singleton', 'context_manager', 'api_client', 'unit_test']
+    if code_type not in valid_code_types:
+        raise ValueError(f'Invalid code_type. Must be one of: {", ".join(valid_code_types)}')
+    
+    # Build arguments
+    args = [code_type, name]
+    for key, value in params.items():
+        args.extend([key, value])
+    
+    return _execute_bot_command('generate_code', args)
 
 @app.route('/api/generate/tests', methods=['POST'])
 @require_modules('bot_modules')
 @handle_api_errors
 def generate_tests():
     """Generate unit tests for uploaded file."""
-        data, error = validate_json_request()
-        if error:
-            raise ValueError(error[0]['error'])
+    data, error = validate_json_request()
+    if error:
+        raise ValueError(error[0]['error'])
+    
+    validation_error = validate_required_fields(data, ['session_id'], {'session_id': str})
+    if validation_error:
+        raise ValueError(validation_error)
+    
+    session_id = data.get('session_id')
+    
+    if session_id not in uploaded_files:
+        raise ValueError('Invalid session ID or file not found')
+    
+    filepath = uploaded_files[session_id]['filepath']
+    if not os.path.exists(filepath):
+        raise FileNotFoundError(f'Uploaded file no longer exists: {filepath}')
         
-        validation_error = validate_required_fields(data, ['session_id'], {'session_id': str})
-        if validation_error:
-            raise ValueError(validation_error)
-        
-        session_id = data.get('session_id')
-        
-        if session_id not in uploaded_files:
-            raise ValueError('Invalid session ID or file not found')
-        
-        filepath = uploaded_files[session_id]['filepath']
-        if not os.path.exists(filepath):
-            raise FileNotFoundError(f'Uploaded file no longer exists: {filepath}')
-            
-        return _execute_bot_command('generate_tests', [filepath])
+    return _execute_bot_command('generate_tests', [filepath])
 
 @app.route('/api/refactor', methods=['POST'])
 def refactor_code():
@@ -920,46 +906,46 @@ def auto_fix_issues():
 @handle_api_errors
 def humanize_text():
     """Humanize text using AI."""
-        data, error = validate_json_request()
-        if error:
-            raise ValueError(error[0]['error'])
-        
-        validation_error = validate_required_fields(data, ['text'], {'text': str})
-        if validation_error:
-            raise ValueError(validation_error)
-        
-        text = data.get('text')
-        
-        # Additional text validation
-        if len(text.strip()) < 10:
-            raise ValueError('Text must be at least 10 characters long')
-        if len(text) > 5000:
-            raise ValueError('Text must be less than 5000 characters')
-        
-        return _execute_bot_command('humanize_text', [text])
+    data, error = validate_json_request()
+    if error:
+        raise ValueError(error[0]['error'])
+    
+    validation_error = validate_required_fields(data, ['text'], {'text': str})
+    if validation_error:
+        raise ValueError(validation_error)
+    
+    text = data.get('text')
+    
+    # Additional text validation
+    if len(text.strip()) < 10:
+        raise ValueError('Text must be at least 10 characters long')
+    if len(text) > 5000:
+        raise ValueError('Text must be less than 5000 characters')
+    
+    return _execute_bot_command('humanize_text', [text])
 
 @app.route('/api/text/detect', methods=['POST'])
 @require_modules('bot_modules')
 @handle_api_errors
 def detect_ai_text():
     """Detect if text is AI-generated."""
-        data, error = validate_json_request()
-        if error:
-            raise ValueError(error[0]['error'])
-        
-        validation_error = validate_required_fields(data, ['text'], {'text': str})
-        if validation_error:
-            raise ValueError(validation_error)
-        
-        text = data.get('text')
-        
-        # Additional text validation
-        if len(text.strip()) < 5:
-            raise ValueError('Text must be at least 5 characters long')
-        if len(text) > 10000:
-            raise ValueError('Text must be less than 10000 characters')
-        
-        return _execute_bot_command('detect_ai_text', [text])
+    data, error = validate_json_request()
+    if error:
+        raise ValueError(error[0]['error'])
+    
+    validation_error = validate_required_fields(data, ['text'], {'text': str})
+    if validation_error:
+        raise ValueError(validation_error)
+    
+    text = data.get('text')
+    
+    # Additional text validation
+    if len(text.strip()) < 5:
+        raise ValueError('Text must be at least 5 characters long')
+    if len(text) > 10000:
+        raise ValueError('Text must be less than 10000 characters')
+    
+    return _execute_bot_command('detect_ai_text', [text])
 
 @app.route('/api/status', methods=['GET'])
 @require_modules('bot_modules')
@@ -1085,77 +1071,79 @@ def websocket_info():
 @handle_api_errors
 def list_all_bots():
     """List all bots managed by Director Bot"""
-        if not director_bot:
-            raise ValueError('Director Bot not initialized')
+    if not director_bot:
+        raise ValueError('Director Bot not initialized')
+    
+    # Create command to list bots
+    command = BotCommand(
+        command_id=str(uuid.uuid4()),
+        command_type='list_bots'
+    )
+    
+    # Use a more robust async execution
+    result = execute_director_command_sync(command)
+    
+    if result:
+        # Broadcast bot list update
+        broadcast_to_websockets({
+            'type': 'bot_list_updated',
+            'data': result,
+            'timestamp': datetime.now().isoformat()
+        })
         
-        # Create command to list bots
-        command = BotCommand(
-            command_id=str(uuid.uuid4()),
-            command_type='list_bots'
-        )
-        
-        # Use a more robust async execution
-        result = execute_director_command_sync(command)
-        
-        if result:
-            # Broadcast bot list update
-            broadcast_to_websockets({
-                'type': 'bot_list_updated',
-                'data': result,
-                'timestamp': datetime.now().isoformat()
-            })
-            
-            return jsonify({
-                'success': True,
-                'data': result
-            })
-        else:
-            raise ValueError('Failed to execute list bots command')
+        return jsonify({
+            'success': True,
+            'data': result
+        })
+    else:
+        raise ValueError('Failed to execute list bots command')
 
 @app.route('/api/bots', methods=['POST'])
 @require_modules('management_system')
 @handle_api_errors
 def create_bot():
     """Create a new bot"""
-        if not director_bot:
-            raise ValueError('Director Bot not initialized')
+    if not director_bot:
+        raise ValueError('Director Bot not initialized')
+    
+    data, error = validate_json_request()
+    if error:
+        raise ValueError(error[0]['error'])
+    
+    validation_error = validate_required_fields(data, [], {
+        'bot_type': str,
+        'name': str
+    } if 'bot_type' in data or 'name' in data else {})
+    if validation_error:
+        raise ValueError(validation_error)
+    
+    bot_type = data.get('bot_type', 'custom')
+    bot_name = data.get('name', f'{bot_type}_bot')
+    
+    command = BotCommand(
+        command_id=str(uuid.uuid4()),
+        command_type='create_bot',
+        parameters={
+            'bot_type': bot_type,
+            'name': bot_name
+        }
+    )
+    
+    result = execute_director_command_sync(command)
+    if result:
+        # Broadcast bot creation event
+        broadcast_to_websockets({
+            'type': 'bot_created',
+            'data': result,
+            'timestamp': datetime.now().isoformat()
+        })
         
-        data, error = validate_json_request()
-        if error:
-            raise ValueError(error[0]['error'])
-        
-        validation_error = validate_required_fields(data, [], {
-            'bot_type': str,
-            'name': str
-        } if 'bot_type' in data or 'name' in data else {})
-        if validation_error:
-            raise ValueError(validation_error)
-        
-        bot_type = data.get('bot_type', 'custom')
-        bot_name = data.get('name', f'{bot_type}_bot')
-        
-        command = BotCommand(
-            command_id=str(uuid.uuid4()),
-            command_type='create_bot',
-            parameters={
-                'bot_type': bot_type,
-                'name': bot_name
-            }
-        )
-        
-        result = execute_director_command_sync(command)
-        if result:
-            # Broadcast bot creation event
-            broadcast_to_websockets({
-                'type': 'bot_created',
-                'data': result,
-                'timestamp': datetime.now().isoformat()
-            })
-            
-            return jsonify({
-                'success': True,
-                'data': result
-            })
+        return jsonify({
+            'success': True,
+            'data': result
+        })
+    else:
+        raise ValueError('Failed to create bot')
 
 @app.route('/api/bots/<bot_id>/start', methods=['POST'])
 def start_bot(bot_id):
@@ -1373,8 +1361,6 @@ def get_bot_management_status():
     except Exception as e:
         logger.error(f"Get bot status failed: {e}")
         return jsonify({'error': str(e)}), 500
-        else:
-            raise ValueError('Failed to create bot')
 
 # Helper functions
 
@@ -1428,64 +1414,64 @@ def _execute_bot_command(command, args):
     """Execute a bot command with proper error handling."""
     global bot_interface
     
-        # Initialize bot if not already done
-        if bot_interface is None:
-            status = initialize_bot_modules()
-            if not status['bot_interface']:
-                raise ValueError('Bot modules not available or failed to initialize')
-        
-        # Validate command and args
-        if not isinstance(command, str) or not command.strip():
-            raise ValueError('Command must be a non-empty string')
-        
-        if not isinstance(args, list):
-            raise ValueError('Args must be a list')
-        
-        # Build command string with better escaping
-        command_str = command
-        if args:
-            escaped_args = []
-            for arg in args:
-                arg_str = str(arg)
-                # Better argument escaping
-                if ' ' in arg_str or '"' in arg_str or "'" in arg_str or '\n' in arg_str:
-                    # Use double quotes and escape internal quotes
-                    escaped_arg = '"' + arg_str.replace('"', '\\"') + '"'
-                    escaped_args.append(escaped_arg)
-                else:
-                    escaped_args.append(arg_str)
-            command_str += ' ' + ' '.join(escaped_args)
-        
-        logger.info(f"Executing command: {command_str}")
-        
-        # Execute command with timeout protection
-        start_time = time.time()
-        result = bot_interface.process_command(command_str)
-        execution_time = time.time() - start_time
-        
-        # Check for command errors
-        if isinstance(result, str) and result.startswith('Error:'):
-            raise ValueError(result)
-        
-        # Broadcast command execution event
-        try:
-            broadcast_to_websockets({
-                'type': 'command_executed',
-                'command': command_str,
-                'result': result[:200] + '...' if len(str(result)) > 200 else result,
-                'execution_time': execution_time,
-                'timestamp': datetime.now().isoformat()
-            })
-        except Exception as broadcast_error:
-            logger.warning(f"Failed to broadcast command execution: {broadcast_error}")
-        
-        return jsonify({
-            'success': True,
-            'result': result,
+    # Initialize bot if not already done
+    if bot_interface is None:
+        status = initialize_bot_modules()
+        if not status['bot_interface']:
+            raise ValueError('Bot modules not available or failed to initialize')
+    
+    # Validate command and args
+    if not isinstance(command, str) or not command.strip():
+        raise ValueError('Command must be a non-empty string')
+    
+    if not isinstance(args, list):
+        raise ValueError('Args must be a list')
+    
+    # Build command string with better escaping
+    command_str = command
+    if args:
+        escaped_args = []
+        for arg in args:
+            arg_str = str(arg)
+            # Better argument escaping
+            if ' ' in arg_str or '"' in arg_str or "'" in arg_str or '\n' in arg_str:
+                # Use double quotes and escape internal quotes
+                escaped_arg = '"' + arg_str.replace('"', '\\"') + '"'
+                escaped_args.append(escaped_arg)
+            else:
+                escaped_args.append(arg_str)
+        command_str += ' ' + ' '.join(escaped_args)
+    
+    logger.info(f"Executing command: {command_str}")
+    
+    # Execute command with timeout protection
+    start_time = time.time()
+    result = bot_interface.process_command(command_str)
+    execution_time = time.time() - start_time
+    
+    # Check for command errors
+    if isinstance(result, str) and result.startswith('Error:'):
+        raise ValueError(result)
+    
+    # Broadcast command execution event
+    try:
+        broadcast_to_websockets({
+            'type': 'command_executed',
             'command': command_str,
+            'result': result[:200] + '...' if len(str(result)) > 200 else result,
             'execution_time': execution_time,
             'timestamp': datetime.now().isoformat()
         })
+    except Exception as broadcast_error:
+        logger.warning(f"Failed to broadcast command execution: {broadcast_error}")
+    
+    return jsonify({
+        'success': True,
+        'result': result,
+        'command': command_str,
+        'execution_time': execution_time,
+        'timestamp': datetime.now().isoformat()
+    })
 
 # Enhanced error handlers with detailed logging
 @app.errorhandler(400)
@@ -1546,67 +1532,6 @@ def service_unavailable(e):
         'error_type': 'service_unavailable',
         'timestamp': datetime.now().isoformat()
     }), 503
-                    'success': False,
-                    'result': 'Error: Bot modules not available. Please check if all dependencies are installed.'
-                })
-        
-        # Validate command and args
-        if not isinstance(command, str) or not command.strip():
-            return jsonify({
-                'success': False,
-                'error': 'Command must be a non-empty string'
-            }), 400
-        
-        if not isinstance(args, list):
-            return jsonify({
-                'success': False,
-                'error': 'Args must be a list'
-            }), 400
-        
-        # Build command string
-        command_str = command
-        if args:
-            # Properly escape arguments
-            escaped_args = []
-            for arg in args:
-                arg_str = str(arg)
-                if ' ' in arg_str or '"' in arg_str or "'" in arg_str:
-                    escaped_args.append(f"\"{arg_str.replace('\"', '\\\"')}\"")
-                else:
-                    escaped_args.append(arg_str)
-            command_str += ' ' + ' '.join(escaped_args)
-        
-        logger.info(f"Executing command: {command_str}")
-        
-        # Execute command
-        result = bot_interface.process_command(command_str)
-        
-        # Broadcast command execution event
-        try:
-            asyncio.create_task(broadcast_to_websockets({
-                'type': 'command_executed',
-                'command': command_str,
-                'result': result[:200] + '...' if len(str(result)) > 200 else result,
-                'timestamp': datetime.now().isoformat()
-            }))
-        except Exception as broadcast_error:
-            logger.warning(f"Failed to broadcast command execution: {broadcast_error}")
-        
-        return jsonify({
-            'success': True,
-            'result': result,
-            'command': command_str,
-            'timestamp': datetime.now().isoformat()
-        })
-        
-    except Exception as e:
-        logger.error(f"Command execution failed: {e}")
-        return jsonify({
-            'success': False,
-            'error': str(e),
-            'command': command,
-            'timestamp': datetime.now().isoformat()
-        }), 500
 
 @app.route('/api/backend/status', methods=['GET'])
 @handle_api_errors
@@ -1856,29 +1781,6 @@ def restart_backend_service(service):
             'error': f'Failed to restart {service}: {str(e)}'
         }), 500
 
-# Error handlers
-
-@app.errorhandler(400)
-def bad_request(e):
-    """Handle bad request errors."""
-    return jsonify({'error': 'Bad request', 'message': str(e)}), 400
-
-@app.errorhandler(413)
-def too_large(e):
-    """Handle file too large errors."""
-    return jsonify({'error': 'File too large. Maximum size is 16MB.'}), 413
-
-@app.errorhandler(404)
-def not_found(e):
-    """Handle 404 errors."""
-    return jsonify({'error': 'Endpoint not found'}), 404
-
-@app.errorhandler(500)
-def internal_error(e):
-    """Handle internal server errors."""
-    logger.error(f"Internal server error: {e}")
-    return jsonify({'error': 'Internal server error'}), 500
-
 # Cleanup on shutdown
 import atexit
 
@@ -1937,3 +1839,4 @@ if __name__ == '__main__':
     print(f"🔧 Allowed file types: {', '.join(ALLOWED_EXTENSIONS)}")
     print("=" * 50)
     
+    app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
