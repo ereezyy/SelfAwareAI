@@ -739,6 +739,9 @@
         let selectedAnalyzeFile = null;
         let selectedRefactorFile = null;
         let currentSessionId = null;
+        let wsConnection = null;
+        let autoScroll = true;
+        let systemInitialized = false;
 
         function handleFileSelect(input) {
             const file = input.files[0];
@@ -1590,6 +1593,7 @@
                     }
                 });
             }
+            initializeSystem();
         });
 
         // Real-time metrics updates
