@@ -3,57 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Self-Aware Assistant Bot</title>
-    
-    <!-- PWA Manifest -->
+    <title>AI Bot Management System</title>
     <link rel="manifest" href="/manifest.json">
-    
-    <!-- Theme Color -->
     <meta name="theme-color" content="#2563eb">
-    <meta name="msapplication-TileColor" content="#2563eb">
-    
-    <!-- Apple Touch Icons -->
-    <link rel="apple-touch-icon" sizes="180x180" href="https://images.pexels.com/photos/8438918/pexels-photo-8438918.jpeg?auto=compress&cs=tinysrgb&w=180&h=180&fit=crop">
-    <link rel="apple-touch-icon" sizes="152x152" href="https://images.pexels.com/photos/8438918/pexels-photo-8438918.jpeg?auto=compress&cs=tinysrgb&w=152&h=152&fit=crop">
-    <link rel="apple-touch-icon" sizes="144x144" href="https://images.pexels.com/photos/8438918/pexels-photo-8438918.jpeg?auto=compress&cs=tinysrgb&w=144&h=144&fit=crop">
-    <link rel="apple-touch-icon" sizes="120x120" href="https://images.pexels.com/photos/8438918/pexels-photo-8438918.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&fit=crop">
-    <link rel="apple-touch-icon" sizes="114x114" href="https://images.pexels.com/photos/8438918/pexels-photo-8438918.jpeg?auto=compress&cs=tinysrgb&w=114&h=114&fit=crop">
-    <link rel="apple-touch-icon" sizes="76x76" href="https://images.pexels.com/photos/8438918/pexels-photo-8438918.jpeg?auto=compress&cs=tinysrgb&w=76&h=76&fit=crop">
-    <link rel="apple-touch-icon" sizes="72x72" href="https://images.pexels.com/photos/8438918/pexels-photo-8438918.jpeg?auto=compress&cs=tinysrgb&w=72&h=72&fit=crop">
-    <link rel="apple-touch-icon" sizes="60x60" href="https://images.pexels.com/photos/8438918/pexels-photo-8438918.jpeg?auto=compress&cs=tinysrgb&w=60&h=60&fit=crop">
-    <link rel="apple-touch-icon" sizes="57x57" href="https://images.pexels.com/photos/8438918/pexels-photo-8438918.jpeg?auto=compress&cs=tinysrgb&w=57&h=57&fit=crop">
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" sizes="32x32" href="https://images.pexels.com/photos/8438918/pexels-photo-8438918.jpeg?auto=compress&cs=tinysrgb&w=32&h=32&fit=crop">
-    <link rel="icon" type="image/png" sizes="16x16" href="https://images.pexels.com/photos/8438918/pexels-photo-8438918.jpeg?auto=compress&cs=tinysrgb&w=16&h=16&fit=crop">
-    
-    <!-- Apple Mobile Web App Meta Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="AI Bot">
-    
-    <!-- Microsoft App Meta Tags -->
-    <meta name="msapplication-TileImage" content="https://images.pexels.com/photos/8438918/pexels-photo-8438918.jpeg?auto=compress&cs=tinysrgb&w=144&h=144&fit=crop">
-    <meta name="msapplication-config" content="/browserconfig.xml">
-    
-    <!-- SEO Meta Tags -->
-    <meta name="description" content="A sophisticated AI-powered bot with self-awareness, self-healing, self-coding capabilities, text humanization, and AI text detection.">
-    <meta name="keywords" content="AI, bot, text humanization, AI detection, self-healing, automation">
-    <meta name="author" content="Self-Aware Assistant Bot">
-    
-    <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="Self-Aware Assistant Bot">
-    <meta property="og:description" content="A sophisticated AI-powered bot with self-awareness, self-healing, self-coding capabilities, text humanization, and AI text detection.">
-    <meta property="og:image" content="https://images.pexels.com/photos/8438918/pexels-photo-8438918.jpeg?auto=compress&cs=tinysrgb&w=512&h=512&fit=crop">
-    <meta property="og:url" content="https://yourdomainhere.com">
-    <meta property="og:type" content="website">
-    
-    <!-- Twitter Card Meta Tags -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Self-Aware Assistant Bot">
-    <meta name="twitter:description" content="A sophisticated AI-powered bot with self-awareness, self-healing, self-coding capabilities, text humanization, and AI text detection.">
-    <meta name="twitter:image" content="https://images.pexels.com/photos/8438918/pexels-photo-8438918.jpeg?auto=compress&cs=tinysrgb&w=512&h=512&fit=crop">
-
+    <link rel="apple-touch-icon" href="https://images.pexels.com/photos/8438918/pexels-photo-8438918.jpeg?auto=compress&cs=tinysrgb&w=180&h=180&fit=crop">
     <style>
         * {
             margin: 0;
@@ -63,51 +18,210 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            line-height: 1.6;
-            color: #333;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
+            color: #333;
         }
 
         .container {
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            max-width: 800px;
-            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             text-align: center;
         }
 
-        .app-container {
-            max-width: 1200px;
-            text-align: left;
-        }
-
-        .app-header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        .feature-panel {
-            background: #f8fafc;
-            border-radius: 12px;
-            padding: 24px;
-            margin: 20px 0;
-            border: 1px solid #e2e8f0;
-        }
-
-        .feature-panel h3 {
+        .header h1 {
             color: #2563eb;
-            margin-top: 0;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #6b7280;
+            font-size: 1.1rem;
+        }
+
+        /* Backend Control Panel */
+        .backend-controls {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .backend-controls h2 {
+            color: #2563eb;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .service-control {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            background: #f8fafc;
+            border-radius: 10px;
+            border-left: 4px solid #e5e7eb;
+        }
+
+        .service-control.running {
+            border-left-color: #10b981;
+            background: #f0fdfa;
+        }
+
+        .service-control.stopped {
+            border-left-color: #ef4444;
+            background: #fef2f2;
+        }
+
+        .service-info {
             display: flex;
             align-items: center;
             gap: 10px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #6b7280;
+        }
+
+        .status-indicator.running {
+            background: #10b981;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.stopped {
+            background: #ef4444;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .service-name {
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .service-description {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        .service-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn.danger {
+            background: #dc2626;
+        }
+
+        .btn.danger:hover {
+            background: #b91c1c;
+        }
+
+        .btn.warning {
+            background: #d97706;
+        }
+
+        .btn.warning:hover {
+            background: #b45309;
+        }
+
+        .tabs {
+            display: flex;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px 15px 0 0;
+            margin-bottom: 0;
+            box-shadow: 0 -5px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 20px 30px;
+            background: transparent;
+            border: none;
+            color: #6b7280;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .tab.active {
+            color: #2563eb;
+            background: rgba(37, 99, 235, 0.05);
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #2563eb;
+        }
+
+        .tab-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 0 0 15px 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            min-height: 400px;
+        }
+
+        .tab-pane {
+            display: none;
+        }
+
+        .tab-pane.active {
+            display: block;
         }
 
         .form-group {
@@ -117,17 +231,17 @@
         .form-group label {
             display: block;
             margin-bottom: 8px;
-            font-weight: 600;
+            font-weight: 500;
             color: #374151;
         }
 
         .form-control {
             width: 100%;
             padding: 12px 16px;
-            border: 2px solid #e2e8f0;
+            border: 2px solid #e5e7eb;
             border-radius: 8px;
-            font-size: 14px;
-            transition: border-color 0.3s ease;
+            font-size: 1rem;
+            transition: all 0.2s;
         }
 
         .form-control:focus {
@@ -136,1561 +250,818 @@
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
         }
 
-        .btn {
-            background: linear-gradient(45deg, #2563eb, #3b82f6);
+        .file-upload {
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            background: #f9fafb;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .file-upload:hover {
+            border-color: #2563eb;
+            background: #eff6ff;
+        }
+
+        .file-upload.dragover {
+            border-color: #2563eb;
+            background: #dbeafe;
+        }
+
+        .upload-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #6b7280;
+        }
+
+        .btn-primary {
+            background: #2563eb;
             color: white;
             border: none;
             padding: 12px 24px;
             border-radius: 8px;
-            font-weight: 600;
+            font-size: 1rem;
+            font-weight: 500;
             cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s ease;
+            transition: all 0.2s;
             margin-right: 10px;
-            margin-bottom: 10px;
         }
 
-        .btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        .btn-primary:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(37, 99, 235, 0.3);
         }
 
-        .btn:disabled {
-            opacity: 0.6;
+        .btn-primary:disabled {
+            background: #9ca3af;
             cursor: not-allowed;
             transform: none;
+            box-shadow: none;
         }
 
-        .btn-secondary {
-            background: linear-gradient(45deg, #6b7280, #9ca3af);
-        }
-
-        .result-panel {
-            background: #1f2937;
-            color: #f9fafb;
-            padding: 20px;
-            border-radius: 8px;
+        .result-container {
             margin-top: 20px;
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-            font-size: 13px;
-            line-height: 1.5;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border-left: 4px solid #2563eb;
+        }
+
+        .result-container h3 {
+            color: #1f2937;
+            margin-bottom: 15px;
+        }
+
+        .result-container pre {
+            background: #ffffff;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
             overflow-x: auto;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-
-        .result-panel pre {
-            margin: 0;
-            white-space: pre-wrap;
-        }
-
-        .tabs {
-            display: flex;
-            border-bottom: 2px solid #e2e8f0;
-            margin-bottom: 24px;
-        }
-
-        .tab {
-            padding: 12px 24px;
-            background: none;
-            border: none;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            color: #6b7280;
-            transition: all 0.3s ease;
-        }
-
-        .tab.active {
-            color: #2563eb;
-            border-bottom: 2px solid #2563eb;
-        }
-
-        .tab:hover {
-            color: #2563eb;
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
+            font-size: 0.9rem;
         }
 
         .loading {
             display: inline-block;
             width: 20px;
             height: 20px;
-            border: 3px solid rgba(255,255,255,.3);
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #2563eb;
             border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
-        .status-indicator {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            margin-right: 8px;
-        }
-
-        .status-ok { background: #10b981; }
-        .status-warning { background: #f59e0b; }
-        .status-error { background: #ef4444; }
-
-        .file-upload {
-            border: 2px dashed #e2e8f0;
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            max-width: 400px;
+            padding: 15px 20px;
             border-radius: 8px;
-            padding: 20px;
-            text-align: center;
-            transition: border-color 0.3s ease;
-            cursor: pointer;
-        }
-
-        .file-upload:hover {
-            border-color: #2563eb;
-        }
-
-        .file-upload.dragover {
-            border-color: #2563eb;
-            background: rgba(37, 99, 235, 0.05);
-        }
-
-        .logo {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            margin: 0 auto 20px;
-            background: linear-gradient(45deg, #2563eb, #3b82f6);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
             color: white;
+            font-weight: 500;
+            z-index: 1000;
+            transform: translateX(450px);
+            transition: transform 0.3s ease;
         }
 
-        h1 {
-            color: #2563eb;
-            margin-bottom: 10px;
-            font-size: 2.5rem;
-            font-weight: 700;
+        .notification.show {
+            transform: translateX(0);
         }
 
-        .subtitle {
-            color: #6b7280;
-            margin-bottom: 30px;
-            font-size: 1.2rem;
+        .notification.success {
+            background: #10b981;
         }
 
-        .features {
+        .notification.error {
+            background: #ef4444;
+        }
+
+        .notification.warning {
+            background: #f59e0b;
+        }
+
+        .notification.info {
+            background: #3b82f6;
+        }
+
+        .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
-            margin: 40px 0;
+            margin-bottom: 30px;
         }
 
-        .feature {
-            background: #f8fafc;
+        .stat-card {
+            background: rgba(255, 255, 255, 0.9);
             padding: 20px;
-            border-radius: 12px;
-            border: 2px solid #e2e8f0;
-            transition: all 0.3s ease;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
 
-        .feature:hover {
-            border-color: #2563eb;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.15);
-        }
-
-        .feature-icon {
+        .stat-card h3 {
             font-size: 2rem;
-            margin-bottom: 10px;
-            display: block;
-        }
-
-        .feature h3 {
             color: #2563eb;
-            margin-bottom: 8px;
-            font-size: 1.2rem;
+            margin-bottom: 5px;
         }
 
-        .feature p {
+        .stat-card p {
             color: #6b7280;
             font-size: 0.9rem;
         }
 
-        .install-prompt {
-            background: linear-gradient(45deg, #2563eb, #3b82f6);
-            color: white;
-            padding: 20px;
-            border-radius: 12px;
-            margin-top: 30px;
-        }
-
-        .install-button {
-            background: white;
-            color: #2563eb;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 15px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .install-button:hover {
-            background: #f1f5f9;
-            transform: translateY(-1px);
-        }
-
-        .install-button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        #installPrompt {
-            display: none;
-        }
-
         @media (max-width: 768px) {
             .container {
-                padding: 20px;
+                padding: 10px;
             }
-            
-            h1 {
+
+            .header h1 {
                 font-size: 2rem;
             }
-            
-            .features {
-                grid-template-columns: 1fr;
+
+            .tabs {
+                flex-wrap: wrap;
+            }
+
+            .tab {
+                flex: 1 1 calc(50% - 10px);
+            }
+
+            .service-control {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .service-actions {
+                margin-top: 10px;
+                justify-content: center;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container app-container">
-        <div class="app-header">
-            <div class="logo">🤖</div>
-            <h1>Self-Aware Assistant Bot</h1>
-            <p class="subtitle">Advanced AI with self-healing, coding, and text processing capabilities</p>
-            
-            <div id="statusIndicator" style="margin-top: 20px;">
-                <span class="status-indicator status-warning"></span>
-                <span id="statusText">Connecting...</span>
-            <div class="status-indicator" id="connectionStatus">
-                <span id="statusDot">🔴</span>
-                <span id="statusText">Disconnected</span>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🤖 AI Bot Management System</h1>
+            <p>Advanced bot management with real-time monitoring and control</p>
+        </div>
+
+        <!-- Backend Control Panel -->
+        <div class="backend-controls">
+            <h2>🔧 Backend Services</h2>
+            <div id="backend-status">
+                <div class="service-control" id="api-service">
+                    <div class="service-info">
+                        <div class="status-indicator running"></div>
+                        <div>
+                            <div class="service-name">API Server</div>
+                            <div class="service-description">Main application server</div>
+                        </div>
+                    </div>
+                    <div class="service-actions">
+                        <span class="btn" style="background: #10b981;">Running</span>
+                    </div>
+                </div>
+                
+                <div class="service-control stopped" id="websocket-service">
+                    <div class="service-info">
+                        <div class="status-indicator stopped"></div>
+                        <div>
+                            <div class="service-name">WebSocket Server</div>
+                            <div class="service-description">Real-time communication</div>
+                        </div>
+                    </div>
+                    <div class="service-actions">
+                        <button class="btn" onclick="startService('websocket')">Start</button>
+                        <button class="btn danger" onclick="stopService('websocket')" disabled>Stop</button>
+                        <button class="btn warning" onclick="restartService('websocket')">Restart</button>
+                    </div>
+                </div>
+                
+                <div class="service-control stopped" id="botmanagement-service">
+                    <div class="service-info">
+                        <div class="status-indicator stopped"></div>
+                        <div>
+                            <div class="service-name">Bot Management</div>
+                            <div class="service-description">Bot orchestration system</div>
+                        </div>
+                    </div>
+                    <div class="service-actions">
+                        <button class="btn" onclick="startService('bot_management')">Start</button>
+                        <button class="btn danger" onclick="stopService('bot_management')" disabled>Stop</button>
+                        <button class="btn warning" onclick="restartService('bot_management')">Restart</button>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- Tabs Navigation -->
         <div class="tabs">
-            <button class="tab active" onclick="switchTab('overview')">📊 Overview</button>
-            <button class="tab" onclick="switchTab('analyze')">🔍 Code Analysis</button>
-            <button class="tab" onclick="switchTab('generate')">⚡ Code Generation</button>
-            <button class="tab" onclick="switchTab('refactor')">🔧 Refactoring</button>
-            <button class="tab" onclick="switchTab('text')">📝 Text Tools</button>
-            <button class="tab" onclick="switchTab('files')">📁 File Manager</button>
-            <button class="tab" onclick="switchTab('scripts')">🐍 Script Runner</button>
-            <button class="tab" onclick="switchTab('autonomy')">🤖 Autonomy</button>
-            <button class="tab" onclick="switchTab('status')">💡 System Status</button>
-            <button class="tab" onclick="switchTab('commands')">⚡ All Commands</button>
+            <button class="tab active" onclick="switchTab('text-processing')">📝 Text Processing</button>
+            <button class="tab" onclick="switchTab('code-analysis')">💻 Code Analysis</button>
+            <button class="tab" onclick="switchTab('bot-management')">🤖 Bot Management</button>
+            <button class="tab" onclick="switchTab('system-status')">📊 System Status</button>
         </div>
 
-        <!-- Overview Tab -->
-        <div id="overview" class="tab-content active">
-            <div class="features">
-                <div class="feature">
-                    <span class="feature-icon">🧠</span>
-                    <h3>Self-Awareness</h3>
-                    <p>Monitors system resources, uptime, and module health</p>
+        <!-- Tab Content -->
+        <div class="tab-content">
+            <!-- Text Processing Tab -->
+            <div id="text-processing" class="tab-pane active">
+                <h2>📝 Text Processing</h2>
+                <div class="form-group">
+                    <label>Text to Process:</label>
+                    <textarea class="form-control" id="inputText" rows="5" 
+                              placeholder="Enter text to humanize or analyze..."></textarea>
                 </div>
-                <div class="feature">
-                    <span class="feature-icon">🔧</span>
-                    <h3>Self-Healing</h3>
-                    <p>Automatically detects and recovers from errors</p>
+                <div>
+                    <button class="btn-primary" onclick="humanizeText()">🔄 Humanize Text</button>
+                    <button class="btn-primary" onclick="detectAI()">🤖 Detect AI</button>
                 </div>
-                <div class="feature">
-                    <span class="feature-icon">💻</span>
-                    <h3>Self-Coding</h3>
-                    <p>Analyzes, patches, and modifies code dynamically</p>
-                </div>
-                <div class="feature">
-                    <span class="feature-icon">📝</span>
-                    <h3>Text Humanization</h3>
-                    <p>Makes AI-generated text sound more natural</p>
-                </div>
-                <div class="feature">
-                    <span class="feature-icon">🤖</span>
-                    <h3>AI Detection</h3>
-                    <p>Identifies whether text was written by AI or humans</p>
-                </div>
-                <div class="feature">
-                    <span class="feature-icon">⚡</span>
-                    <h3>Command Interface</h3>
-                    <p>Easy-to-use web and command-line interface</p>
+                <div id="text-result" class="result-container" style="display: none;">
+                    <h3>Result:</h3>
+                    <pre id="text-output"></pre>
                 </div>
             </div>
-        </div>
 
-        <!-- Code Analysis Tab -->
-        <div id="analyze" class="tab-content">
-            <div class="feature-panel">
-                <h3>🔍 Code Analysis Tools</h3>
-                
-                <div class="form-group">
-                    <label for="analyzeFile">Select Python file to analyze:</label>
-                    <div class="file-upload" onclick="document.getElementById('analyzeFileInput').click()">
-                        <input type="file" id="analyzeFileInput" accept=".py" style="display: none;" onchange="handleFileSelect(this)">
-                        <div id="analyzeFileText">📁 Click to select a Python file or drag & drop</div>
+            <!-- Code Analysis Tab -->
+            <div id="code-analysis" class="tab-pane">
+                <h2>💻 Code Analysis</h2>
+                <div class="file-upload" onclick="document.getElementById('fileInput').click()" 
+                     ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                    <div class="upload-icon">📁</div>
+                    <p>Click to upload or drag and drop your Python files here</p>
+                    <input type="file" id="fileInput" accept=".py" style="display: none;" onchange="handleFile(this.files[0])">
+                </div>
+                <div id="uploaded-file" style="display: none;">
+                    <h3>📄 Uploaded File: <span id="filename"></span></h3>
+                    <div>
+                        <button class="btn-primary" onclick="analyzeCode()">🔍 Analyze Structure</button>
+                        <button class="btn-primary" onclick="checkQuality()">✅ Quality Check</button>
+                        <button class="btn-primary" onclick="generateTests()">🧪 Generate Tests</button>
                     </div>
                 </div>
-                
-                <div>
-                    <button class="btn" onclick="analyzeCodeStructure()">📊 Analyze Structure</button>
-                    <button class="btn" onclick="analyzeCodeQuality()">🎯 Quality Analysis</button>
-                    <button class="btn btn-secondary" onclick="autoFixIssues()">🔧 Auto Fix</button>
-                </div>
-                
-                <div id="analysisResult" class="result-panel" style="display: none;">
-                    <pre id="analysisOutput"></pre>
+                <div id="code-result" class="result-container" style="display: none;">
+                    <h3>Analysis Result:</h3>
+                    <pre id="code-output"></pre>
                 </div>
             </div>
-        </div>
 
-        <!-- Code Generation Tab -->
-        <div id="generate" class="tab-content">
-            <div class="feature-panel">
-                <h3>⚡ Code Generation</h3>
-                
+            <!-- Bot Management Tab -->
+            <div id="bot-management" class="tab-pane">
+                <h2>🤖 Bot Management</h2>
                 <div class="form-group">
-                    <label for="codeType">Code Type:</label>
-                    <select id="codeType" class="form-control">
-                        <option value="class_basic">Basic Class</option>
-                        <option value="singleton">Singleton Pattern</option>
-                        <option value="context_manager">Context Manager</option>
-                        <option value="api_client">API Client</option>
-                        <option value="unit_test">Unit Test</option>
+                    <label>Bot Type:</label>
+                    <select class="form-control" id="botType">
+                        <option value="analyzer">🔍 Analyzer Bot</option>
+                        <option value="generator">⚡ Generator Bot</option>
+                        <option value="monitor">📊 Monitor Bot</option>
+                        <option value="custom">🔧 Custom Bot</option>
                     </select>
                 </div>
-                
                 <div class="form-group">
-                    <label for="className">Class/Function Name:</label>
-                    <input type="text" id="className" class="form-control" placeholder="MyClass" value="MyClass">
+                    <label>Bot Name:</label>
+                    <input type="text" class="form-control" id="botName" placeholder="Enter bot name...">
                 </div>
-                
-                <div class="form-group">
-                    <label for="additionalParams">Additional Parameters (JSON format, optional):</label>
-                    <textarea id="additionalParams" class="form-control" rows="3" placeholder='{"api_name": "MyAPI", "init_params": "self, name"}' style="font-family: monospace;"></textarea>
-                </div>
-                
                 <div>
-                    <button class="btn" onclick="generateCode()">⚡ Generate Code</button>
-                    <button class="btn btn-secondary" onclick="generateTests()">🧪 Generate Tests</button>
+                    <button class="btn-primary" onclick="createBot()">➕ Create Bot</button>
+                    <button class="btn-primary" onclick="listBots()">📋 List Bots</button>
+                    <button class="btn-primary" onclick="createSwarm()">🤖 Create Swarm</button>
                 </div>
-                
-                <div id="generationResult" class="result-panel" style="display: none;">
-                    <pre id="generationOutput"></pre>
+                <div id="bot-result" class="result-container" style="display: none;">
+                    <h3>Bot Management Result:</h3>
+                    <pre id="bot-output"></pre>
                 </div>
             </div>
-        </div>
 
-        <!-- Refactoring Tab -->
-        <div id="refactor" class="tab-content">
-            <div class="feature-panel">
-                <h3>🔧 Code Refactoring Tools</h3>
-                
-                <div class="form-group">
-                    <label for="refactorFile">Select Python file to refactor:</label>
-                    <div class="file-upload" onclick="document.getElementById('refactorFileInput').click()">
-                        <input type="file" id="refactorFileInput" accept=".py" style="display: none;" onchange="handleRefactorFileSelect(this)">
-                        <div id="refactorFileText">📁 Click to select a Python file</div>
+            <!-- System Status Tab -->
+            <div id="system-status" class="tab-pane">
+                <h2>📊 System Status</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3 id="cpu-usage">--</h3>
+                        <p>CPU Usage</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="memory-usage">--</h3>
+                        <p>Memory Usage</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="uptime">--</h3>
+                        <p>Uptime</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="active-bots">--</h3>
+                        <p>Active Bots</p>
                     </div>
                 </div>
-                
-                <div class="form-group">
-                    <label for="refactorType">Refactoring Type:</label>
-                    <select id="refactorType" class="form-control">
-                        <option value="format_with_black">Format with Black</option>
-                        <option value="format_with_autopep8">Format with autopep8</option>
-                        <option value="add_docstrings">Add Missing Docstrings</option>
-                        <option value="rename_variable">Rename Variable</option>
-                    </select>
-                </div>
-                
-                <div id="renameSection" style="display: none;">
-                    <div class="form-group">
-                        <label for="oldName">Old Variable Name:</label>
-                        <input type="text" id="oldName" class="form-control" placeholder="old_var_name">
-                    </div>
-                    <div class="form-group">
-                        <label for="newName">New Variable Name:</label>
-                        <input type="text" id="newName" class="form-control" placeholder="new_var_name">
-                    </div>
-                </div>
-                
-                <div>
-                    <button class="btn" onclick="refactorCode()">🔧 Apply Refactoring</button>
-                    <button class="btn btn-secondary" onclick="patchCode()">📝 Apply Patch</button>
-                </div>
-                
-                <div id="refactorResult" class="result-panel" style="display: none;">
-                    <pre id="refactorOutput"></pre>
+                <button class="btn-primary" onclick="getSystemStatus()">🔄 Refresh Status</button>
+                <div id="status-result" class="result-container" style="display: none;">
+                    <h3>System Information:</h3>
+                    <pre id="status-output"></pre>
                 </div>
             </div>
-        </div>
-
-        <!-- Text Tools Tab -->
-        <div id="text" class="tab-content">
-            <div class="feature-panel">
-                <h3>📝 Text Humanization</h3>
-                
-                <div class="form-group">
-                    <label for="textToHumanize">Text to humanize:</label>
-                    <textarea id="textToHumanize" class="form-control" rows="4" placeholder="Enter text that you want to make sound more natural..."></textarea>
-                </div>
-                
-                <div>
-                    <button class="btn" onclick="humanizeText()">📝 Humanize Text</button>
-                </div>
-                
-                <div id="humanizeResult" class="result-panel" style="display: none;">
-                    <pre id="humanizeOutput"></pre>
-                </div>
-            </div>
-            
-            <div class="feature-panel">
-                <h3>🤖 AI Text Detection</h3>
-                
-                <div class="form-group">
-                    <label for="textToDetect">Text to analyze:</label>
-                    <textarea id="textToDetect" class="form-control" rows="4" placeholder="Enter text to check if it was generated by AI..."></textarea>
-                </div>
-                
-                <div>
-                    <button class="btn" onclick="detectAIText()">🤖 Detect AI Text</button>
-                </div>
-                
-                <div id="detectResult" class="result-panel" style="display: none;">
-                    <pre id="detectOutput"></pre>
-                </div>
-            </div>
-        </div>
-
-        <!-- System Status Tab -->
-        <div id="status" class="tab-content">
-            <div class="feature-panel">
-                <h3>💡 System Status</h3>
-                
-                <div>
-                    <button class="btn" onclick="getSystemStatus()">💡 Refresh Status</button>
-                </div>
-                
-                <div id="statusResult" class="result-panel" style="display: none;">
-                    <pre id="statusOutput"></pre>
-                </div>
-            </div>
-        </div>
-
-        <div id="installPrompt" class="install-prompt">
-            <h3>📱 Install as App</h3>
-            <p>Get the full experience by installing this web app on your device!</p>
-            <button id="installButton" class="install-button">Install App</button>
         </div>
     </div>
 
-    <script>
-        // PWA Installation Logic
-        let deferredPrompt;
-        const installPrompt = document.getElementById('installPrompt');
-        const installButton = document.getElementById('installButton');
+    <!-- Notification Container -->
+    <div id="notification" class="notification"></div>
 
-        window.addEventListener('beforeinstallprompt', (e) => {
-            // Prevent Chrome 67 and earlier from automatically showing the prompt
-            e.preventDefault();
-            // Stash the event so it can be triggered later
-            deferredPrompt = e;
-            // Show the install prompt
-            installPrompt.style.display = 'block';
+    <script>
+        let currentSessionId = null;
+        let statusUpdateInterval = null;
+
+        // Initialize backend status on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateBackendStatus();
+            // Update status every 10 seconds
+            setInterval(updateBackendStatus, 10000);
         });
 
-        installButton.addEventListener('click', async () => {
-            if (!deferredPrompt) {
+        // Backend Service Control Functions
+        async function startService(service) {
+            try {
+                showNotification('Starting ' + service + '...', 'info');
+                const response = await fetch(`/api/backend/start/${service}`, {
+                    method: 'POST'
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification(result.message, 'success');
+                    updateBackendStatus();
+                } else {
+                    showNotification(result.error, 'error');
+                }
+            } catch (error) {
+                showNotification('Failed to start service: ' + error.message, 'error');
+            }
+        }
+
+        async function stopService(service) {
+            try {
+                showNotification('Stopping ' + service + '...', 'info');
+                const response = await fetch(`/api/backend/stop/${service}`, {
+                    method: 'POST'
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification(result.message, 'success');
+                    updateBackendStatus();
+                } else {
+                    showNotification(result.error, 'error');
+                }
+            } catch (error) {
+                showNotification('Failed to stop service: ' + error.message, 'error');
+            }
+        }
+
+        async function restartService(service) {
+            try {
+                showNotification('Restarting ' + service + '...', 'info');
+                const response = await fetch(`/api/backend/restart/${service}`, {
+                    method: 'POST'
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification(result.message, 'success');
+                    updateBackendStatus();
+                } else {
+                    showNotification(result.error, 'error');
+                }
+            } catch (error) {
+                showNotification('Failed to restart service: ' + error.message, 'error');
+            }
+        }
+
+        async function updateBackendStatus() {
+            try {
+                const response = await fetch('/api/backend/status');
+                const result = await response.json();
+                
+                if (result.success) {
+                    const status = result.status;
+                    
+                    // Update WebSocket service status
+                    updateServiceDisplay('websocket-service', status.websocket_server, 'websocket');
+                    
+                    // Update Bot Management service status
+                    updateServiceDisplay('botmanagement-service', status.bot_management, 'bot_management');
+                }
+            } catch (error) {
+                console.error('Failed to update backend status:', error);
+            }
+        }
+
+        function updateServiceDisplay(elementId, status, serviceName) {
+            const element = document.getElementById(elementId);
+            const statusIndicator = element.querySelector('.status-indicator');
+            const buttons = element.querySelectorAll('button');
+            
+            if (status === 'running') {
+                element.className = 'service-control running';
+                statusIndicator.className = 'status-indicator running';
+                
+                // Enable stop button, disable start button
+                buttons[0].disabled = true; // Start button
+                buttons[1].disabled = false; // Stop button
+            } else {
+                element.className = 'service-control stopped';
+                statusIndicator.className = 'status-indicator stopped';
+                
+                // Enable start button, disable stop button
+                buttons[0].disabled = false; // Start button
+                buttons[1].disabled = true; // Stop button
+            }
+        }
+
+        function switchTab(tabId) {
+            // Remove active class from all tabs and panes
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+            
+            // Add active class to clicked tab and corresponding pane
+            event.target.classList.add('active');
+            const pane = document.getElementById(tabId);
+            if (pane) {
+                pane.classList.add('active');
+            }
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            
+            // Show notification
+            setTimeout(() => notification.classList.add('show'), 100);
+            
+            // Hide notification after 3 seconds
+            setTimeout(() => notification.classList.remove('show'), 3500);
+        }
+
+        function showLoading(buttonId) {
+            const button = document.getElementById(buttonId);
+            if (button) {
+                button.innerHTML = '<span class="loading"></span>Processing...';
+                button.disabled = true;
+            }
+        }
+
+        function hideLoading(buttonId, originalText) {
+            const button = document.getElementById(buttonId);
+            if (button) {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        }
+
+        // Text Processing Functions
+        async function humanizeText() {
+            const text = document.getElementById('inputText').value.trim();
+            if (!text) {
+                showNotification('Please enter text to humanize', 'warning');
                 return;
             }
-            
-            // Show the install prompt
-            deferredPrompt.prompt();
-            
-            // Wait for the user to respond to the prompt
-            const { outcome } = await deferredPrompt.userChoice;
-            console.log(`User response to the install prompt: ${outcome}`);
-            
-            // Clear the deferredPrompt
-            deferredPrompt = null;
-            
-            // Hide the install prompt
-            installPrompt.style.display = 'none';
-        });
 
-        // Handle successful installation
-        window.addEventListener('appinstalled', (evt) => {
-            console.log('App was installed successfully');
-            installPrompt.style.display = 'none';
-        });
-
-        // Service Worker Registration
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(registration => {
-                        console.log('SW registered: ', registration);
-                    })
-                    .catch(registrationError => {
-                        console.log('SW registration failed: ', registrationError);
-                    });
-            });
-        }
-
-        // PWA Status Check
-        function checkPWAStatus() {
-            const status = {
-                isInstalled: window.matchMedia('(display-mode: standalone)').matches,
-                isInstallable: deferredPrompt !== null,
-                hasServiceWorker: 'serviceWorker' in navigator,
-                isOnline: navigator.onLine
-            };
-            
-            console.log('PWA Status:', status);
-            return status;
-        }
-
-        // Check PWA status on load
-        window.addEventListener('load', () => {
-            setTimeout(checkPWAStatus, 1000);
-            checkBackendStatus();
-        });
-
-        // Tab switching functionality
-        function switchTab(tabName) {
-            // Hide all tab contents
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            
-            // Remove active class from all tabs
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // Show selected tab content
-            document.getElementById(tabName).classList.add('active');
-            
-            // Add active class to clicked tab
-            event.target.classList.add('active');
-        }
-
-        // Backend API functions
-        async function makeApiCall(endpoint, data = {}) {
             try {
-                const response = await fetch(endpoint, {
+                showNotification('Humanizing text...', 'info');
+                const response = await fetch('/api/humanize', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(data)
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text })
                 });
+
+                const result = await response.json();
                 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                if (result.success) {
+                    document.getElementById('text-result').style.display = 'block';
+                    document.getElementById('text-output').textContent = 
+                        Array.isArray(result.humanized_text) 
+                        ? result.humanized_text.join('\n\n---\n\n')
+                        : result.humanized_text;
+                    showNotification('Text humanized successfully!', 'success');
+                } else {
+                    showNotification(result.error, 'error');
                 }
-                
-                const result = await response.json();
-                return result.success ? result.result : result.error || 'Unknown error';
             } catch (error) {
-                console.error('API call failed:', error);
-                return `Error: ${error.message}`;
+                showNotification('Failed to humanize text: ' + error.message, 'error');
             }
         }
 
-        // Check if backend is running
-        async function checkBackendStatus() {
+        async function detectAI() {
+            const text = document.getElementById('inputText').value.trim();
+            if (!text) {
+                showNotification('Please enter text to analyze', 'warning');
+                return;
+            }
+
             try {
-                const response = await fetch('/api/health');
+                showNotification('Analyzing text for AI detection...', 'info');
+                const response = await fetch('/api/detect', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text })
+                });
+
                 const result = await response.json();
-                document.getElementById('statusText').textContent = 'Connected';
-                document.querySelector('#statusIndicator .status-indicator').className = 'status-indicator status-ok';
+                
+                if (result.success) {
+                    document.getElementById('text-result').style.display = 'block';
+                    document.getElementById('text-output').textContent = JSON.stringify(result.detection_result, null, 2);
+                    showNotification('AI detection completed!', 'success');
+                } else {
+                    showNotification(result.error, 'error');
+                }
             } catch (error) {
-                document.getElementById('statusText').textContent = 'Backend Offline';
-                document.querySelector('#statusIndicator .status-indicator').className = 'status-indicator status-error';
+                showNotification('Failed to analyze text: ' + error.message, 'error');
             }
         }
 
-        // File handling
-        let selectedAnalyzeFile = null;
-        let selectedRefactorFile = null;
-        let currentSessionId = null;
+        // File Upload Functions
+        function handleDragOver(event) {
+            event.preventDefault();
+            event.currentTarget.classList.add('dragover');
+        }
 
-        function handleFileSelect(input) {
-            const file = input.files[0];
-            if (file) {
-                uploadFile(file, 'analyze');
+        function handleDragLeave(event) {
+            event.currentTarget.classList.remove('dragover');
+        }
+
+        function handleDrop(event) {
+            event.preventDefault();
+            event.currentTarget.classList.remove('dragover');
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
             }
         }
 
-        function handleRefactorFileSelect(input) {
-            const file = input.files[0];
-            if (file) {
-                uploadFile(file, 'refactor');
+        async function handleFile(file) {
+            if (!file.name.endsWith('.py')) {
+                showNotification('Please upload a Python (.py) file', 'warning');
+                return;
             }
-        }
 
-        async function uploadFile(file, type) {
             const formData = new FormData();
             formData.append('file', file);
-            
+
             try {
+                showNotification('Uploading file...', 'info');
                 const response = await fetch('/api/upload', {
                     method: 'POST',
                     body: formData
                 });
-                
-                if (!response.ok) {
-                    throw new Error(`Upload failed: ${response.status}`);
-                }
-                
+
                 const result = await response.json();
                 
                 if (result.success) {
-                    if (type === 'analyze') {
-                        selectedAnalyzeFile = file;
-                        currentSessionId = result.session_id;
-                        document.getElementById('analyzeFileText').textContent = `📄 ${file.name} (uploaded)`;
-                    } else if (type === 'refactor') {
-                        selectedRefactorFile = file;
-                        currentSessionId = result.session_id;
-                        document.getElementById('refactorFileText').textContent = `📄 ${file.name} (uploaded)`;
-                    }
-                    console.log('File uploaded successfully:', result);
+                    currentSessionId = result.session_id;
+                    document.getElementById('uploaded-file').style.display = 'block';
+                    document.getElementById('filename').textContent = result.filename;
+                    showNotification('File uploaded successfully!', 'success');
                 } else {
-                    throw new Error(result.error || 'Upload failed');
+                    showNotification(result.error, 'error');
                 }
             } catch (error) {
-                console.error('File upload error:', error);
-                alert(`File upload failed: ${error.message}`);
+                showNotification('Failed to upload file: ' + error.message, 'error');
             }
         }
 
-        // =====================================
-        // BOT MANAGEMENT SYSTEM
-        // =====================================
-        
-        let websocketConnection = null;
-        let botListData = [];
-        let swarmListData = [];
-        
-        function initializeBotManager() {
-            setTimeout(() => {
-                refreshDirectorStatus();
-                refreshBotList();
-                refreshSwarmList();
-            }, 2000);
-        }
-        
-        async function refreshDirectorStatus() {
-            try {
-                const response = await fetch('/api/bot-status');
-                const result = await response.json();
-                
-                if (result.success && result.data.result) {
-                    const directorData = result.data.result.director;
-                    document.getElementById('directorStatusText').textContent = directorData.status || 'Unknown';
-                    document.getElementById('directorUptime').textContent = formatUptime(directorData.uptime || 0);
-                    document.getElementById('directorCommands').textContent = directorData.metrics?.commands_executed || 0;
-                } else {
-                    document.getElementById('directorStatusText').textContent = 'Offline';
-                    document.getElementById('directorUptime').textContent = '-';
-                    document.getElementById('directorCommands').textContent = '-';
-                }
-            } catch (error) {
-                console.error('Director status refresh failed:', error);
-                document.getElementById('directorStatusText').textContent = 'Error';
-            }
-        }
-        
-        async function createNewBot() {
-            const botType = document.getElementById('newBotType').value;
-            const botName = document.getElementById('newBotName').value.trim();
-            
-            if (!botName) {
-                alert('Please enter a bot name');
+        // Code Analysis Functions
+        async function analyzeCode() {
+            if (!currentSessionId) {
+                showNotification('Please upload a Python file first', 'warning');
                 return;
             }
-            
+
             try {
-                const response = await fetch('/api/bots', {
+                showNotification('Analyzing code structure...', 'info');
+                const response = await fetch('/api/analyze', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        bot_type: botType,
-                        name: botName
-                    })
+                    body: JSON.stringify({ session_id: currentSessionId })
                 });
-                
+
                 const result = await response.json();
                 
                 if (result.success) {
-                    logActivity(`✅ Created ${botType} bot: ${botName}`);
-                    document.getElementById('newBotName').value = '';
-                    setTimeout(refreshBotList, 500);
+                    document.getElementById('code-result').style.display = 'block';
+                    document.getElementById('code-output').textContent = JSON.stringify(result.analysis, null, 2);
+                    showNotification('Code analysis completed!', 'success');
                 } else {
-                    logActivity(`❌ Failed to create bot: ${result.error}`);
+                    showNotification(result.error, 'error');
                 }
             } catch (error) {
-                logActivity(`❌ Error creating bot: ${error.message}`);
+                showNotification('Failed to analyze code: ' + error.message, 'error');
             }
         }
-        
-        async function refreshBotList() {
-            try {
-                const response = await fetch('/api/bots');
-                const result = await response.json();
-                
-                if (result.success && result.data.result) {
-                    botListData = result.data.result.bots || [];
-                    updateBotListDisplay();
-                } else {
-                    document.getElementById('botList').innerHTML = '<div style="color: #ef4444; text-align: center; padding: 20px;">Failed to load bot list</div>';
-                }
-            } catch (error) {
-                console.error('Bot list refresh failed:', error);
-                document.getElementById('botList').innerHTML = '<div style="color: #ef4444; text-align: center; padding: 20px;">Error loading bots</div>';
-            }
-        }
-        
-        function updateBotListDisplay() {
-            const container = document.getElementById('botList');
-            
-            if (botListData.length === 0) {
-                container.innerHTML = '<div style="text-align: center; color: #6b7280; padding: 20px;">No bots created yet</div>';
+
+        async function checkQuality() {
+            if (!currentSessionId) {
+                showNotification('Please upload a Python file first', 'warning');
                 return;
             }
-            
-            const botsHtml = botListData.map(bot => {
-                const statusColor = {
-                    'active': '#10b981',
-                    'idle': '#3b82f6', 
-                    'error': '#ef4444',
-                    'stopped': '#6b7280'
-                }[bot.status] || '#6b7280';
-                
-                return `
-                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 8px;">
-                        <div>
-                            <span style="font-weight: 600;">${bot.name}</span>
-                            <span style="color: #6b7280; margin-left: 8px;">(${bot.type})</span>
-                            <br>
-                            <span style="color: ${statusColor}; font-size: 0.875rem;">● ${bot.status}</span>
-                            <span style="color: #6b7280; margin-left: 8px; font-size: 0.875rem;">Uptime: ${formatUptime(bot.uptime)}</span>
-                        </div>
-                        <div>
-                            <button class="btn" style="padding: 4px 8px; margin: 2px;" onclick="startBot('${bot.bot_id}', '${bot.name}')">▶️</button>
-                            <button class="btn btn-secondary" style="padding: 4px 8px; margin: 2px;" onclick="stopBot('${bot.bot_id}', '${bot.name}')">⏹️</button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-            
-            container.innerHTML = botsHtml;
-        }
-        
-        async function startBot(botId, botName) {
+
             try {
-                const response = await fetch(`/api/bots/${botId}/start`, {
-                    method: 'POST'
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    logActivity(`🚀 Started bot: ${botName}`);
-                    setTimeout(refreshBotList, 500);
-                } else {
-                    logActivity(`❌ Failed to start bot ${botName}: ${result.error}`);
-                }
-            } catch (error) {
-                logActivity(`❌ Error starting bot ${botName}: ${error.message}`);
-            }
-        }
-        
-        async function stopBot(botId, botName) {
-            try {
-                const response = await fetch(`/api/bots/${botId}/stop`, {
-                    method: 'POST'
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    logActivity(`⏹️ Stopped bot: ${botName}`);
-                    setTimeout(refreshBotList, 500);
-                } else {
-                    logActivity(`❌ Failed to stop bot ${botName}: ${result.error}`);
-                }
-            } catch (error) {
-                logActivity(`❌ Error stopping bot ${botName}: ${error.message}`);
-            }
-        }
-        
-        async function createNewSwarm() {
-            const swarmName = document.getElementById('newSwarmName').value.trim();
-            const template = document.getElementById('swarmTemplate').value;
-            
-            if (!swarmName) {
-                alert('Please enter a swarm name');
-                return;
-            }
-            
-            try {
-                const requestData = { name: swarmName };
-                if (template) {
-                    requestData.template = template;
-                }
-                
-                const response = await fetch('/api/swarms', {
+                showNotification('Checking code quality...', 'info');
+                const response = await fetch('/api/quality', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(requestData)
+                    body: JSON.stringify({ session_id: currentSessionId })
                 });
-                
+
                 const result = await response.json();
                 
                 if (result.success) {
-                    logActivity(`🌊 Created swarm: ${swarmName}${template ? ` (${template})` : ''}`);
-                    document.getElementById('newSwarmName').value = '';
-                    setTimeout(refreshSwarmList, 500);
+                    document.getElementById('code-result').style.display = 'block';
+                    document.getElementById('code-output').textContent = result.quality_report;
+                    showNotification('Quality check completed!', 'success');
                 } else {
-                    logActivity(`❌ Failed to create swarm: ${result.error}`);
+                    showNotification(result.error, 'error');
                 }
             } catch (error) {
-                logActivity(`❌ Error creating swarm: ${error.message}`);
+                showNotification('Failed to check quality: ' + error.message, 'error');
             }
-        }
-        
-        async function refreshSwarmList() {
-            try {
-                const response = await fetch('/api/swarms');
-                const result = await response.json();
-                
-                if (result.success && result.data.result) {
-                    swarmListData = result.data.result.swarms || [];
-                    updateSwarmListDisplay();
-                } else {
-                    document.getElementById('swarmList').innerHTML = '<div style="color: #ef4444; text-align: center; padding: 20px;">Failed to load swarm list</div>';
-                }
-            } catch (error) {
-                console.error('Swarm list refresh failed:', error);
-                document.getElementById('swarmList').innerHTML = '<div style="color: #ef4444; text-align: center; padding: 20px;">Error loading swarms</div>';
-            }
-        }
-        
-        function updateSwarmListDisplay() {
-            const container = document.getElementById('swarmList');
-            
-            if (swarmListData.length === 0) {
-                container.innerHTML = '<div style="text-align: center; color: #6b7280; padding: 20px;">No swarms created yet</div>';
-                return;
-            }
-            
-            const swarmsHtml = swarmListData.map(swarm => {
-                const statusColor = {
-                    'active': '#10b981',
-                    'idle': '#3b82f6',
-                    'error': '#ef4444',
-                    'stopped': '#6b7280'
-                }[swarm.status] || '#6b7280';
-                
-                return `
-                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 8px;">
-                        <div>
-                            <span style="font-weight: 600;">${swarm.name}</span>
-                            <span style="color: #6b7280; margin-left: 8px;">(${swarm.bot_count} bots)</span>
-                            <br>
-                            <span style="color: ${statusColor}; font-size: 0.875rem;">● ${swarm.status}</span>
-                            <span style="color: #6b7280; margin-left: 8px; font-size: 0.875rem;">Uptime: ${formatUptime(swarm.uptime)}</span>
-                        </div>
-                        <div>
-                            <button class="btn" style="padding: 4px 8px; margin: 2px;" onclick="startSwarm('${swarm.swarm_id}', '${swarm.name}')">🚀</button>
-                            <button class="btn btn-secondary" style="padding: 4px 8px; margin: 2px;" onclick="stopSwarm('${swarm.swarm_id}', '${swarm.name}')">⏹️</button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-            
-            container.innerHTML = swarmsHtml;
-        }
-        
-        async function startSwarm(swarmId, swarmName) {
-            try {
-                const response = await fetch(`/api/swarms/${swarmId}/start`, {
-                    method: 'POST'
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    logActivity(`🚀 Started swarm: ${swarmName}`);
-                    setTimeout(() => {
-                        refreshSwarmList();
-                        refreshBotList();
-                    }, 500);
-                } else {
-                    logActivity(`❌ Failed to start swarm ${swarmName}: ${result.error}`);
-                }
-            } catch (error) {
-                logActivity(`❌ Error starting swarm ${swarmName}: ${error.message}`);
-            }
-        }
-        
-        async function stopSwarm(swarmId, swarmName) {
-            try {
-                const response = await fetch(`/api/swarms/${swarmId}/stop`, {
-                    method: 'POST'
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    logActivity(`⏹️ Stopped swarm: ${swarmName}`);
-                    setTimeout(() => {
-                        refreshSwarmList();
-                        refreshBotList();
-                    }, 500);
-                } else {
-                    logActivity(`❌ Failed to stop swarm ${swarmName}: ${result.error}`);
-                }
-            } catch (error) {
-                logActivity(`❌ Error stopping swarm ${swarmName}: ${error.message}`);
-            }
-        }
-        
-        function updateTargetOptions() {
-            const targetType = document.getElementById('targetType').value;
-            const targetSelection = document.getElementById('targetSelection');
-            
-            if (targetType === 'auto') {
-                targetSelection.style.display = 'none';
-            } else {
-                targetSelection.style.display = 'block';
-                
-                if (targetType === 'bot') {
-                    targetSelection.innerHTML = '<option value="">Select Bot</option>' +
-                        botListData.map(bot => `<option value="${bot.bot_id}">${bot.name} (${bot.type})</option>`).join('');
-                } else if (targetType === 'swarm') {
-                    targetSelection.innerHTML = '<option value="">Select Swarm</option>' +
-                        swarmListData.map(swarm => `<option value="${swarm.swarm_id}">${swarm.name}</option>`).join('');
-                }
-            }
-        }
-        
-        async function delegateCommand() {
-            const command = document.getElementById('delegateCommand').value.trim();
-            const parametersText = document.getElementById('commandParameters').value.trim();
-            const targetType = document.getElementById('targetType').value;
-            const targetSelection = document.getElementById('targetSelection').value;
-            
-            if (!command) {
-                alert('Please enter a command');
-                return;
-            }
-            
-            let parameters = {};
-            if (parametersText) {
-                try {
-                    parameters = JSON.parse(parametersText);
-                } catch (error) {
-                    alert('Invalid JSON in parameters');
-                    return;
-                }
-            }
-            
-            // Build command data
-            const commandData = {
-                command: command,
-                args: [],
-                parameters: parameters
-            };
-            
-            if (targetType === 'bot' && targetSelection) {
-                commandData.target_bot = targetSelection;
-            } else if (targetType === 'swarm' && targetSelection) {
-                commandData.target_swarm = targetSelection;
-            }
-            
-            showLoading('delegationResult', 'delegationOutput');
-            
-            try {
-                const result = await makeApiCall('/api/command', commandData);
-                showResult('delegationResult', 'delegationOutput', result);
-                
-                const targetInfo = targetType === 'auto' ? 'auto-selected' : 
-                                 targetType === 'bot' ? botListData.find(b => b.bot_id === targetSelection)?.name :
-                                 swarmListData.find(s => s.swarm_id === targetSelection)?.name;
-                
-                logActivity(`⚡ Delegated '${command}' to ${targetInfo || 'unknown target'}`);
-            } catch (error) {
-                showResult('delegationResult', 'delegationOutput', `Error: ${error.message}`);
-                logActivity(`❌ Command delegation failed: ${error.message}`);
-            }
-        }
-        
-        function connectWebSocket() {
-            if (websocketConnection) {
-                websocketConnection.close();
-            }
-            
-            try {
-                const wsUrl = `ws://${window.location.hostname}:8765`;
-                websocketConnection = new WebSocket(wsUrl);
-                
-                websocketConnection.onopen = function() {
-                    logActivity('🔌 WebSocket connected for real-time updates');
-                };
-                
-                websocketConnection.onmessage = function(event) {
-                    try {
-                        const data = JSON.parse(event.data);
-                        handleWebSocketMessage(data);
-                    } catch (error) {
-                        console.error('WebSocket message parse error:', error);
-                    }
-                };
-                
-                websocketConnection.onclose = function() {
-                    logActivity('🔌 WebSocket disconnected');
-                };
-                
-                websocketConnection.onerror = function(error) {
-                    logActivity('❌ WebSocket error: Connection failed');
-                    console.error('WebSocket error:', error);
-                };
-                
-            } catch (error) {
-                logActivity(`❌ WebSocket connection failed: ${error.message}`);
-            }
-        }
-        
-        function handleWebSocketMessage(data) {
-            switch (data.type) {
-                case 'bot_event':
-                    const eventEmoji = data.event === 'started' ? '🚀' : 
-                                     data.event === 'stopped' ? '⏹️' : 
-                                     data.event === 'error' ? '❌' : '📋';
-                    logActivity(`${eventEmoji} Bot event: ${data.bot_id} ${data.event}`);
-                    // Refresh lists after bot events
-                    setTimeout(refreshBotList, 500);
-                    break;
-                    
-                case 'status_update':
-                    // Update director status
-                    refreshDirectorStatus();
-                    break;
-                    
-                case 'command_result':
-                    logActivity(`✅ Command completed: ${data.command_id}`);
-                    break;
-                    
-                case 'error':
-                    logActivity(`❌ WebSocket error: ${data.message}`);
-                    break;
-                    
-                default:
-                    console.log('Unknown WebSocket message:', data);
-            }
-        }
-        
-        function logActivity(message) {
-            const log = document.getElementById('activityLog');
-            const timestamp = new Date().toLocaleTimeString();
-            const logEntry = `<div style="margin-bottom: 4px;"><span style="color: #6b7280;">[${timestamp}]</span> ${message}</div>`;
-            
-            log.innerHTML += logEntry;
-            log.scrollTop = log.scrollHeight;
-            
-            // Keep only last 100 entries
-            const entries = log.children;
-            if (entries.length > 100) {
-                log.removeChild(entries[0]);
-            }
-        }
-        
-        function clearActivityLog() {
-            document.getElementById('activityLog').innerHTML = '<div style="color: #10b981;">[System] Activity log cleared</div>';
-        }
-        
-        function formatUptime(seconds) {
-            if (seconds < 60) return `${Math.floor(seconds)}s`;
-            if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
-            if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
-            return `${Math.floor(seconds / 86400)}d`;
-        }
-
-        // Drag and drop functionality
-        function setupDragAndDrop() {
-            const fileUpload = document.querySelector('.file-upload');
-            
-            fileUpload.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                fileUpload.classList.add('dragover');
-            });
-            
-            fileUpload.addEventListener('dragleave', () => {
-                fileUpload.classList.remove('dragover');
-            });
-            
-            fileUpload.addEventListener('drop', (e) => {
-                e.preventDefault();
-                fileUpload.classList.remove('dragover');
-                
-                const files = e.dataTransfer.files;
-                if (files.length > 0 && files[0].name.endsWith('.py')) {
-                    uploadFile(files[0], 'analyze');
-                }
-            });
-        }
-
-        // API Functions for each feature
-        async function analyzeCodeStructure() {
-            if (!currentSessionId) {
-                alert('Please select a Python file first');
-                return;
-            }
-            
-            showLoading('analysisResult', 'analysisOutput');
-            const result = await makeApiCall('/api/analyze/structure', {
-                session_id: currentSessionId
-            });
-            showResult('analysisResult', 'analysisOutput', result);
-        }
-
-        async function analyzeCodeQuality() {
-            if (!currentSessionId) {
-                alert('Please select a Python file first');
-                return;
-            }
-            
-            showLoading('analysisResult', 'analysisOutput');
-            const result = await makeApiCall('/api/analyze/quality', {
-                session_id: currentSessionId
-            });
-            showResult('analysisResult', 'analysisOutput', result);
-        }
-
-        async function autoFixIssues() {
-            if (!currentSessionId) {
-                alert('Please select a Python file first');
-                return;
-            }
-            
-            showLoading('analysisResult', 'analysisOutput');
-            const result = await makeApiCall('/api/autofix', {
-                session_id: currentSessionId
-            });
-            showResult('analysisResult', 'analysisOutput', result);
-        }
-
-        async function generateCode() {
-            const codeType = document.getElementById('codeType').value;
-            const className = document.getElementById('className').value;
-            const additionalParams = document.getElementById('additionalParams').value;
-            
-            let params = {};
-            
-            if (additionalParams.trim()) {
-                try {
-                    params = JSON.parse(additionalParams);
-                } catch (e) {
-                    alert('Invalid JSON in additional parameters');
-                    return;
-                }
-            }
-            
-            showLoading('generationResult', 'generationOutput');
-            const result = await makeApiCall('/api/generate/code', {
-                code_type: codeType,
-                name: className,
-                params: params
-            });
-            showResult('generationResult', 'generationOutput', result);
         }
 
         async function generateTests() {
             if (!currentSessionId) {
-                alert('Please select a Python file first');
+                showNotification('Please upload a Python file first', 'warning');
                 return;
             }
-            
-            showLoading('generationResult', 'generationOutput');
-            const result = await makeApiCall('/api/generate/tests', {
-                session_id: currentSessionId
-            });
-            showResult('generationResult', 'generationOutput', result);
-        }
 
-        async function refactorCode() {
-            if (!currentSessionId) {
-                alert('Please select a Python file first');
-                return;
-            }
-            
-            const refactorType = document.getElementById('refactorType').value;
-            let params = {};
-            
-            if (refactorType === 'rename_variable') {
-                const oldName = document.getElementById('oldName').value;
-                const newName = document.getElementById('newName').value;
-                if (!oldName || !newName) {
-                    alert('Please provide both old and new variable names');
-                    return;
-                }
-                params.old_name = oldName;
-                params.new_name = newName;
-            }
-            
-            showLoading('refactorResult', 'refactorOutput');
-            const result = await makeApiCall('/api/refactor', {
-                session_id: currentSessionId,
-                refactor_type: refactorType,
-                params: params
-            });
-            showResult('refactorResult', 'refactorOutput', result);
-        }
-
-        async function patchCode() {
-            // Implementation for patch code functionality
-            alert('Patch code functionality - please implement specific patch requirements');
-        }
-
-        async function humanizeText() {
-            const text = document.getElementById('textToHumanize').value;
-            if (!text.trim()) {
-                alert('Please enter text to humanize');
-                return;
-            }
-            
-            showLoading('humanizeResult', 'humanizeOutput');
-            const result = await makeApiCall('/api/text/humanize', {
-                text: text
-            });
-            showResult('humanizeResult', 'humanizeOutput', result);
-        }
-
-        async function detectAIText() {
-            const text = document.getElementById('textToDetect').value;
-            if (!text.trim()) {
-                alert('Please enter text to analyze');
-                return;
-            }
-            
-            showLoading('detectResult', 'detectOutput');
-            const result = await makeApiCall('/api/text/detect', {
-                text: text
-            });
-            showResult('detectResult', 'detectOutput', result);
-        }
-
-        async function getSystemStatus() {
-            showLoading('statusResult', 'statusOutput');
-            const response = await fetch('/api/status');
-            const result = await response.json();
-            const statusText = result.success ? result.result : result.error;
-            showResult('statusResult', 'statusOutput', result);
-        }
-
-        // Utility functions
-        function showLoading(resultId, outputId) {
-            const resultPanel = document.getElementById(resultId);
-            const output = document.getElementById(outputId);
-            
-            resultPanel.style.display = 'block';
-            output.innerHTML = '<div class="loading"></div> Processing...';
-        }
-
-        function showResult(resultId, outputId, result) {
-            const resultPanel = document.getElementById(resultId);
-            const output = document.getElementById(outputId);
-            
-            resultPanel.style.display = 'block';
-            output.textContent = result;
-        }
-
-        // Autonomy and Health functions
-        async function enableAutonomy() {
-            showLoading('autonomyResult', 'autonomyOutput');
-            const result = await makeApiCall('/api/autonomy/enable');
-            showResult('autonomyResult', 'autonomyOutput', result);
-            setTimeout(refreshAutonomyStatus, 1000);
-        }
-
-        async function disableAutonomy() {
-            showLoading('autonomyResult', 'autonomyOutput');
-            const result = await makeApiCall('/api/autonomy/disable');
-            showResult('autonomyResult', 'autonomyOutput', result);
-            setTimeout(refreshAutonomyStatus, 1000);
-        }
-
-        async function refreshAutonomyStatus() {
-            if (!document.getElementById('autonomy').classList.contains('active')) {
-                return; // Don't refresh if tab is not active
-            }
-            
             try {
-                const response = await fetch('/api/autonomy/status');
-                const result = await response.json();
-                const statusText = result.success ? result.result : result.error;
-                
-                const statusDiv = document.getElementById('autonomyStatus');
-                statusDiv.innerHTML = `<pre style="white-space: pre-wrap; font-family: inherit; margin: 0;">${statusText}</pre>`;
-            } catch (error) {
-                document.getElementById('autonomyStatus').innerHTML = `<p style="color: #ef4444;">Error loading status: ${error.message}</p>`;
-            }
-        }
-
-        // Auto-refresh autonomy status every 30 seconds when tab is active
-        setInterval(() => {
-            if (document.getElementById('autonomy')?.classList.contains('active')) {
-                refreshAutonomyStatus();
-            }
-        }, 30000);
-
-        async function forceHealthCheck() {
-            showLoading('healthResult', 'healthOutput');
-            const result = await makeApiCall('/api/system/health-check');
-            showResult('healthResult', 'healthOutput', result);
-            updateMetricsFromHealthCheck(result);
-        }
-
-        async function optimizeSystem() {
-            showLoading('healthResult', 'healthOutput');
-            const result = await makeApiCall('/api/system/optimize');
-            showResult('healthResult', 'healthOutput', result);
-            setTimeout(refreshAutonomyStatus, 2000);
-        }
-
-        async function getRecoveryHistory() {
-            showLoading('healthResult', 'healthOutput');
-            const result = await makeApiCall('/api/system/recovery-history', {});
-            showResult('healthResult', 'healthOutput', result);
-        }
-
-        async function initializeModules() {
-            showLoading('statusResult', 'statusOutput');
-            const response = await fetch('/api/initialize', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            });
-            const result = await response.json();
-            const message = result.success ? result.message : result.error;
-            showResult('statusResult', 'statusOutput', message);
-        }
-
-        async function getHelp() {
-            showLoading('statusResult', 'statusOutput');
-            const result = await makeApiCall('/api/command', {
-                command: 'help',
-                args: []
-            });
-            showResult('statusResult', 'statusOutput', result);
-        }
-
-        // Command Interface Functions
-        let commandHistory = [];
-
-        function setCommand(command) {
-            document.getElementById('customCommand').value = command;
-        }
-
-        async function executeCustomCommand() {
-            const commandInput = document.getElementById('customCommand');
-            const command = commandInput.value.trim();
-            
-            if (!command) {
-                alert('Please enter a command');
-                return;
-            }
-            
-            // Add to history
-            commandHistory.unshift({
-                command: command,
-                timestamp: new Date().toLocaleTimeString()
-            });
-            
-            // Keep only last 20 commands
-            if (commandHistory.length > 20) {
-                commandHistory = commandHistory.slice(0, 20);
-            }
-            
-            updateCommandHistory();
-            
-            showLoading('commandResult', 'commandOutput');
-            
-            try {
-                // Parse command and args
-                const parts = command.split(/\s+/);
-                const cmd = parts[0];
-                const args = parts.slice(1);
-                
-                const result = await makeApiCall('/api/command', {
-                    command: cmd,
-                    args: args
-                });
-                
-                showResult('commandResult', 'commandOutput', result);
-                
-                // Clear input for next command
-                commandInput.value = '';
-                
-            } catch (error) {
-                showResult('commandResult', 'commandOutput', `Error: ${error.message}`);
-            }
-        }
-
-        function updateCommandHistory() {
-            const historyList = document.getElementById('historyList');
-            
-            if (commandHistory.length === 0) {
-                historyList.innerHTML = '<p style="color: #6b7280; margin: 0;">No commands executed yet...</p>';
-                return;
-            }
-            
-            const historyHtml = commandHistory.map(item => 
-                `<div style="margin-bottom: 4px; padding: 4px 0; border-bottom: 1px solid #e2e8f0;">
-                    <span style="color: #6b7280; font-size: 0.75rem;">[${item.timestamp}]</span>
-                    <span style="color: #374151; margin-left: 8px;">${item.command}</span>
-                </div>`
-            ).join('');
-            
-            historyList.innerHTML = historyHtml;
-        }
-
-        function clearCommandHistory() {
-            commandHistory = [];
-            updateCommandHistory();
-            const commandResult = document.getElementById('commandResult');
-            const commandOutput = document.getElementById('commandOutput');
-            commandResult.style.display = 'none';
-            commandOutput.textContent = '';
-        }
-
-        // Handle Enter key in command input
-        document.addEventListener('DOMContentLoaded', function() {
-            const commandInput = document.getElementById('customCommand');
-            if (commandInput) {
-                commandInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        executeCustomCommand();
-                    }
-                });
-            }
-        });
-
-        // Real-time metrics updates
-        function startMetricsUpdates() {
-            // Update metrics every 30 seconds
-            setInterval(updateMetrics, 30000);
-            // Initial update
-            updateMetrics();
-        }
-
-        async function updateMetrics() {
-            try {
-                const response = await fetch('/api/system/health-check', {
+                showNotification('Generating tests...', 'info');
+                const response = await fetch('/api/generate-tests', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ session_id: currentSessionId })
                 });
+
                 const result = await response.json();
-                updateMetricsFromHealthCheck(result.result);
-            } catch (error) {
-                console.error('Metrics update failed:', error);
-            }
-        }
-
-        function updateMetricsFromHealthCheck(healthCheckResult) {
-            try {
-                // Parse metrics from health check result
-                const lines = healthCheckResult.split('\n');
-                let metrics = {};
                 
-                for (const line of lines) {
-                    if (line.includes('CPU Usage:')) {
-                        const match = line.match(/(\d+\.?\d*)%/);
-                        if (match) metrics.cpu = parseFloat(match[1]);
-                    } else if (line.includes('Memory Usage:')) {
-                        const match = line.match(/(\d+\.?\d*)%/);
-                        if (match) metrics.memory = parseFloat(match[1]);
-                    } else if (line.includes('Disk Usage:')) {
-                        const match = line.match(/(\d+\.?\d*)%/);
-                        if (match) metrics.disk = parseFloat(match[1]);
-                    } else if (line.includes('Response Time:')) {
-                        const match = line.match(/(\d+\.?\d*)/);
-                        if (match) metrics.responseTime = parseFloat(match[1]) * 1000; // Convert to ms
-                    }
-                }
-                
-                // Update UI
-                if (metrics.cpu !== undefined) {
-                    const cpuElement = document.getElementById('cpuMetric');
-                    cpuElement.textContent = `${metrics.cpu.toFixed(1)}%`;
-                    cpuElement.style.color = metrics.cpu > 80 ? '#ef4444' : metrics.cpu > 60 ? '#f59e0b' : '#10b981';
-                }
-                
-                if (metrics.memory !== undefined) {
-                    const memoryElement = document.getElementById('memoryMetric');
-                    memoryElement.textContent = `${metrics.memory.toFixed(1)}%`;
-                    memoryElement.style.color = metrics.memory > 85 ? '#ef4444' : metrics.memory > 70 ? '#f59e0b' : '#10b981';
-                }
-                
-                if (metrics.disk !== undefined) {
-                    const diskElement = document.getElementById('diskMetric');
-                    diskElement.textContent = `${metrics.disk.toFixed(1)}%`;
-                    diskElement.style.color = metrics.disk > 90 ? '#ef4444' : metrics.disk > 75 ? '#f59e0b' : '#10b981';
-                }
-                
-                if (metrics.responseTime !== undefined) {
-                    const responseElement = document.getElementById('responseMetric');
-                    responseElement.textContent = `${metrics.responseTime.toFixed(0)}ms`;
-                    responseElement.style.color = metrics.responseTime > 1000 ? '#ef4444' : metrics.responseTime > 500 ? '#f59e0b' : '#10b981';
-                }
-                
-            } catch (error) {
-                console.error('Error parsing metrics:', error);
-            }
-        }
-
-        // Handle refactor type change
-        document.addEventListener('DOMContentLoaded', function() {
-            const refactorType = document.getElementById('refactorType');
-            const renameSection = document.getElementById('renameSection');
-            
-            refactorType.addEventListener('change', function() {
-                if (this.value === 'rename_variable') {
-                    renameSection.style.display = 'block';
+                if (result.success) {
+                    document.getElementById('code-result').style.display = 'block';
+                    document.getElementById('code-output').textContent = result.test_code;
+                    showNotification('Tests generated successfully!', 'success');
                 } else {
-                    renameSection.style.display = 'none';
+                    showNotification(result.error, 'error');
                 }
+            } catch (error) {
+                showNotification('Failed to generate tests: ' + error.message, 'error');
+            }
+        }
+
+        // Bot Management Functions
+        async function createBot() {
+            const botType = document.getElementById('botType').value;
+            const botName = document.getElementById('botName').value.trim();
+
+            if (!botName) {
+                showNotification('Please enter a bot name', 'warning');
+                return;
+            }
+
+            try {
+                showNotification('Creating bot...', 'info');
+                const response = await fetch('/api/create-bot', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ bot_type: botType, name: botName })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('bot-result').style.display = 'block';
+                    document.getElementById('bot-output').textContent = JSON.stringify(result, null, 2);
+                    showNotification('Bot created successfully!', 'success');
+                } else {
+                    showNotification(result.error, 'error');
+                }
+            } catch (error) {
+                showNotification('Failed to create bot: ' + error.message, 'error');
+            }
+        }
+
+        async function listBots() {
+            try {
+                showNotification('Fetching bot list...', 'info');
+                const response = await fetch('/api/list-bots');
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('bot-result').style.display = 'block';
+                    document.getElementById('bot-output').textContent = JSON.stringify(result.bots, null, 2);
+                    showNotification('Bot list retrieved successfully!', 'success');
+                } else {
+                    showNotification(result.error, 'error');
+                }
+            } catch (error) {
+                showNotification('Failed to list bots: ' + error.message, 'error');
+            }
+        }
+
+        async function createSwarm() {
+            const swarmName = prompt('Enter swarm name:');
+            if (!swarmName) return;
+
+            const template = prompt('Enter template (code_analysis, code_generation, or full_service):') || 'code_analysis';
+
+            try {
+                showNotification('Creating swarm...', 'info');
+                const response = await fetch('/api/create-swarm', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: swarmName, template })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('bot-result').style.display = 'block';
+                    document.getElementById('bot-output').textContent = JSON.stringify(result, null, 2);
+                    showNotification('Swarm created successfully!', 'success');
+                } else {
+                    showNotification(result.error, 'error');
+                }
+            } catch (error) {
+                showNotification('Failed to create swarm: ' + error.message, 'error');
+            }
+        }
+
+        // System Status Functions
+        async function getSystemStatus() {
+            try {
+                showNotification('Getting system status...', 'info');
+                const response = await fetch('/api/bot/status');
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('status-result').style.display = 'block';
+                    document.getElementById('status-output').textContent = JSON.stringify(result, null, 2);
+                    
+                    // Update stat cards if data is available
+                    if (result.status && result.status.system_metrics) {
+                        const metrics = result.status.system_metrics;
+                        document.getElementById('cpu-usage').textContent = metrics.cpu_usage_percent + '%';
+                        document.getElementById('memory-usage').textContent = metrics.memory_used_percent + '%';
+                    }
+                    
+                    if (result.status && result.status.bot_uptime) {
+                        document.getElementById('uptime').textContent = result.status.bot_uptime;
+                    }
+                    
+                    showNotification('Status retrieved successfully!', 'success');
+                } else {
+                    showNotification(result.error, 'error');
+                }
+            } catch (error) {
+                showNotification('Failed to get status: ' + error.message, 'error');
+            }
+        }
+
+        // Register service worker for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => console.log('SW registered: ', registration))
+                    .catch(registrationError => console.log('SW registration failed: ', registrationError));
             });
-            
-            setupDragAndDrop();
-        });
+        }
     </script>
 </body>
 </html>

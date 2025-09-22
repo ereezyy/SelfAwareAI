@@ -12,6 +12,9 @@ import tempfile
 import uuid
 from datetime import datetime
 import asyncio
+import subprocess
+import signal
+import psutil
 import threading
 import time
 import websockets
@@ -96,6 +99,10 @@ CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 # Global variables
 bot_interface = None
+backend_processes = {
+    'websocket_server': None,
+    'bot_management': None
+}
 uploaded_files = {}  # Track uploaded files by session
 director_bot = None
 websocket_server = None
@@ -1582,6 +1589,254 @@ def service_unavailable(e):
             'error': str(e),
             'command': command,
             'timestamp': datetime.now().isoformat()
+        }), 500
+
+@app.route('/api/backend/status', methods=['GET'])
+@handle_api_errors
+def get_backend_status():
+    """Get backend service status"""
+    status = {
+        'api_server': 'running',
+        'websocket_server': 'stopped',
+        'bot_management': 'stopped',
+        'processes': {}
+    }
+    
+    # Check WebSocket server
+    if backend_processes['websocket_server']:
+        try:
+            proc = psutil.Process(backend_processes['websocket_server'].pid)
+            if proc.is_running():
+                status['websocket_server'] = 'running'
+                status['processes']['websocket_server'] = {
+                    'pid': proc.pid,
+                    'cpu_percent': proc.cpu_percent(),
+                    'memory_percent': proc.memory_percent()
+                }
+            else:
+                status['websocket_server'] = 'stopped'
+                backend_processes['websocket_server'] = None
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            status['websocket_server'] = 'stopped'
+            backend_processes['websocket_server'] = None
+    
+    # Check if director bot is available
+    global director_bot, MANAGEMENT_SYSTEM_AVAILABLE
+    if director_bot and MANAGEMENT_SYSTEM_AVAILABLE:
+        status['bot_management'] = 'running'
+    
+    return jsonify({
+        'success': True,
+        'status': status,
+        'timestamp': datetime.now().isoformat()
+    }), 200
+
+@app.route('/api/backend/start/<service>', methods=['POST'])
+@handle_api_errors
+def start_backend_service(service):
+    """Start a backend service"""
+    global director_bot, MANAGEMENT_SYSTEM_AVAILABLE
+    
+    if service == 'websocket':
+        if backend_processes['websocket_server']:
+            try:
+                proc = psutil.Process(backend_processes['websocket_server'].pid)
+                if proc.is_running():
+                    return jsonify({
+                        'success': False,
+                        'error': 'WebSocket server is already running',
+                        'pid': proc.pid
+                    }), 400
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                backend_processes['websocket_server'] = None
+        
+        try:
+            # Start WebSocket server
+            proc = subprocess.Popen([
+                sys.executable, 'websocket_server.py'
+            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            
+            backend_processes['websocket_server'] = proc
+            logger.info(f"Started WebSocket server with PID: {proc.pid}")
+            
+            return jsonify({
+                'success': True,
+                'message': 'WebSocket server started successfully',
+                'pid': proc.pid,
+                'service': 'websocket_server'
+            }), 200
+            
+        except Exception as e:
+            logger.error(f"Failed to start WebSocket server: {e}")
+            return jsonify({
+                'success': False,
+                'error': f'Failed to start WebSocket server: {str(e)}'
+            }), 500
+    
+    elif service == 'bot_management':
+        if not MANAGEMENT_SYSTEM_AVAILABLE:
+            return jsonify({
+                'success': False,
+                'error': 'Bot management system is not available'
+            }), 400
+        
+        if director_bot and director_bot.is_running:
+            return jsonify({
+                'success': False,
+                'error': 'Bot management system is already running'
+            }), 400
+        
+        try:
+            # Initialize and start director bot
+            if not director_bot:
+                from bot_management_system import get_director_bot
+                director_bot = get_director_bot()
+            
+            # Start director bot in background thread
+            def start_director():
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                loop.run_until_complete(director_bot.start())
+            
+            import threading
+            director_thread = threading.Thread(target=start_director)
+            director_thread.daemon = True
+            director_thread.start()
+            
+            logger.info("Started bot management system")
+            
+            return jsonify({
+                'success': True,
+                'message': 'Bot management system started successfully',
+                'service': 'bot_management'
+            }), 200
+            
+        except Exception as e:
+            logger.error(f"Failed to start bot management system: {e}")
+            return jsonify({
+                'success': False,
+                'error': f'Failed to start bot management system: {str(e)}'
+            }), 500
+    
+    else:
+        return jsonify({
+            'success': False,
+            'error': f'Unknown service: {service}'
+        }), 400
+
+@app.route('/api/backend/stop/<service>', methods=['POST'])
+@handle_api_errors
+def stop_backend_service(service):
+    """Stop a backend service"""
+    global director_bot
+    
+    if service == 'websocket':
+        if not backend_processes['websocket_server']:
+            return jsonify({
+                'success': False,
+                'error': 'WebSocket server is not running'
+            }), 400
+        
+        try:
+            proc = backend_processes['websocket_server']
+            
+            # Try graceful shutdown first
+            proc.terminate()
+            
+            try:
+                proc.wait(timeout=5)  # Wait up to 5 seconds for graceful shutdown
+            except subprocess.TimeoutExpired:
+                # Force kill if graceful shutdown fails
+                proc.kill()
+                proc.wait()
+            
+            backend_processes['websocket_server'] = None
+            logger.info("Stopped WebSocket server")
+            
+            return jsonify({
+                'success': True,
+                'message': 'WebSocket server stopped successfully',
+                'service': 'websocket_server'
+            }), 200
+            
+        except Exception as e:
+            logger.error(f"Failed to stop WebSocket server: {e}")
+            return jsonify({
+                'success': False,
+                'error': f'Failed to stop WebSocket server: {str(e)}'
+            }), 500
+    
+    elif service == 'bot_management':
+        if not director_bot or not director_bot.is_running:
+            return jsonify({
+                'success': False,
+                'error': 'Bot management system is not running'
+            }), 400
+        
+        try:
+            # Stop director bot
+            def stop_director():
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                loop.run_until_complete(director_bot.stop())
+            
+            import threading
+            stop_thread = threading.Thread(target=stop_director)
+            stop_thread.start()
+            stop_thread.join(timeout=5)  # Wait up to 5 seconds
+            
+            logger.info("Stopped bot management system")
+            
+            return jsonify({
+                'success': True,
+                'message': 'Bot management system stopped successfully',
+                'service': 'bot_management'
+            }), 200
+            
+        except Exception as e:
+            logger.error(f"Failed to stop bot management system: {e}")
+            return jsonify({
+                'success': False,
+                'error': f'Failed to stop bot management system: {str(e)}'
+            }), 500
+    
+    else:
+        return jsonify({
+            'success': False,
+            'error': f'Unknown service: {service}'
+        }), 400
+
+@app.route('/api/backend/restart/<service>', methods=['POST'])
+@handle_api_errors
+def restart_backend_service(service):
+    """Restart a backend service"""
+    try:
+        # Stop the service first
+        stop_response = stop_backend_service(service)
+        if stop_response[1] not in [200, 400]:  # 400 is OK if service wasn't running
+            return stop_response
+        
+        # Wait a moment
+        import time
+        time.sleep(2)
+        
+        # Start the service
+        start_response = start_backend_service(service)
+        
+        if start_response[1] == 200:
+            return jsonify({
+                'success': True,
+                'message': f'{service} restarted successfully',
+                'service': service
+            }), 200
+        else:
+            return start_response
+            
+    except Exception as e:
+        logger.error(f"Failed to restart {service}: {e}")
+        return jsonify({
+            'success': False,
+            'error': f'Failed to restart {service}: {str(e)}'
         }), 500
 
 # Error handlers
