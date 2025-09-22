@@ -11,6 +11,8 @@ import logging
 import tempfile
 import uuid
 from datetime import datetime
+import asyncio
+import datetime
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
@@ -46,6 +48,7 @@ logger = logging.getLogger(__name__)
 # Global variables
 bot_interface = None
 uploaded_files = {}  # Track uploaded files by session
+director_bot = None
 
 # Configuration
 UPLOAD_FOLDER = tempfile.gettempdir()
@@ -64,7 +67,7 @@ def generate_session_id():
 
 def initialize_bot_modules():
     """Initialize all bot modules with comprehensive error handling."""
-    global bot_interface
+    global bot_interface, director_bot
     
     if not MODULES_AVAILABLE:
         logger.warning("Bot modules not available - API will return error responses")
@@ -111,6 +114,16 @@ def initialize_bot_modules():
         )
         
         logger.info("🎉 Bot modules initialized successfully!")
+        
+        # Initialize Director Bot for management system
+        try:
+            from bot_management_system import get_director_bot, BotCommand
+            director_bot = get_director_bot()
+            logger.info("✅ Director Bot initialized for management system")
+        except Exception as e:
+            logger.warning(f"⚠️  Could not initialize Director Bot: {e}")
+            director_bot = None
+        
         return True
         
     except Exception as e:
