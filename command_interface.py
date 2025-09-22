@@ -51,6 +51,12 @@ class CommandInterface:
             "refactor_code": self._handle_refactor_code,
             "auto_fix": self._handle_auto_fix,
             "generate_tests": self._handle_generate_tests,
+            "enable_autonomy": self._handle_enable_autonomy,
+            "disable_autonomy": self._handle_disable_autonomy,
+            "autonomy_status": self._handle_autonomy_status,
+            "force_health_check": self._handle_force_health_check,
+            "system_optimize": self._handle_system_optimize,
+            "recovery_history": self._handle_recovery_history,
             "patch_code": self._handle_patch_code,
             "modify_config": self._handle_modify_config,
             "run_python_script": self._handle_run_python_script,
@@ -464,6 +470,223 @@ class CommandInterface:
                 self.logger.error(f"Error during AI text detection via AI detector module: {e}")
                 return f"Error detecting AI text: {e}"
         return "Error: AITextDetectorModule not available."
+
+    def _handle_enable_autonomy(self, args):
+        """Enable autonomous self-healing and optimization (requires SelfHealingModule)."""
+        if self.healing_module:
+            try:
+                self.healing_module.enable_autonomy()
+                return "✅ Autonomy enabled - Bot will now self-heal and optimize automatically"
+            except Exception as e:
+                self.logger.error(f"Error enabling autonomy: {e}")
+                return f"Error enabling autonomy: {e}"
+        return "Error: SelfHealingModule not available for autonomy control."
+    
+    def _handle_disable_autonomy(self, args):
+        """Disable autonomous operation (requires SelfHealingModule)."""
+        if self.healing_module:
+            try:
+                self.healing_module.disable_autonomy()
+                return "⏸️ Autonomy disabled - Bot will require manual intervention for issues"
+            except Exception as e:
+                self.logger.error(f"Error disabling autonomy: {e}")
+                return f"Error disabling autonomy: {e}"
+        return "Error: SelfHealingModule not available for autonomy control."
+    
+    def _handle_autonomy_status(self, args):
+        """Get comprehensive autonomy and system health status (requires SelfHealingModule)."""
+        if self.healing_module:
+            try:
+                status = self.healing_module.get_autonomy_status()
+                
+                report = "🤖 AUTONOMY & HEALTH STATUS\n"
+                report += "=" * 50 + "\n\n"
+                
+                # Autonomy status
+                autonomy_icon = "✅" if status["autonomy_enabled"] else "⏸️"
+                report += f"{autonomy_icon} Autonomy: {'Enabled' if status['autonomy_enabled'] else 'Disabled'}\n"
+                
+                monitoring_icon = "🔍" if status["health_monitoring"] else "⚠️"
+                report += f"{monitoring_icon} Health Monitoring: {'Active' if status['health_monitoring'] else 'Inactive'}\n"
+                
+                # Health summary
+                health = status["health_summary"]
+                if health.get("status") != "no_data":
+                    health_icon = "💚" if health["status"] == "healthy" else "⚠️"
+                    report += f"\n{health_icon} SYSTEM HEALTH:\n"
+                    
+                    current = health.get("current", {})
+                    report += f"  CPU: {current.get('cpu', 0):.1f}%\n"
+                    report += f"  Memory: {current.get('memory', 0):.1f}%\n"
+                    report += f"  Disk: {current.get('disk', 0):.1f}%\n"
+                    report += f"  Response Time: {current.get('response_time', 0):.3f}s\n"
+                    
+                    # Trends
+                    trends = health.get("trends", [])
+                    if trends:
+                        report += f"\n⚠️ TRENDS DETECTED:\n"
+                        for trend in trends:
+                            report += f"  - {trend}\n"
+                
+                # Recovery queue
+                queue_size = status["recovery_queue_size"]
+                queue_icon = "📋" if queue_size > 0 else "✅"
+                report += f"\n{queue_icon} Recovery Queue: {queue_size} pending actions\n"
+                
+                # Action history
+                history = status["action_history"]
+                if history:
+                    report += f"\n📊 RECENT RECOVERY ACTIONS:\n"
+                    for action, stats in list(history.items())[-5:]:  # Last 5 actions
+                        success_rate = (stats['successes'] / stats['attempts']) * 100 if stats['attempts'] > 0 else 0
+                        report += f"  {action}: {stats['attempts']} attempts, {success_rate:.0f}% success\n"
+                
+                # Available strategies
+                strategies = status["available_strategies"]
+                report += f"\n🛠️ Available Recovery Strategies: {len(strategies)}\n"
+                report += f"  {', '.join(strategies[:10])}{'...' if len(strategies) > 10 else ''}\n"
+                
+                return report
+                
+            except Exception as e:
+                self.logger.error(f"Error getting autonomy status: {e}")
+                return f"Error getting autonomy status: {e}"
+        return "Error: SelfHealingModule not available for status check."
+    
+    def _handle_force_health_check(self, args):
+        """Force an immediate comprehensive health check (requires SelfHealingModule)."""
+        if self.healing_module:
+            try:
+                result = self.healing_module.force_health_check()
+                
+                report = "🔍 FORCED HEALTH CHECK RESULTS\n"
+                report += "=" * 40 + "\n\n"
+                
+                metrics = result["metrics"]
+                report += f"📊 CURRENT METRICS:\n"
+                report += f"  CPU Usage: {metrics['cpu_usage']:.1f}%\n"
+                report += f"  Memory Usage: {metrics['memory_usage']:.1f}%\n"
+                report += f"  Disk Usage: {metrics['disk_usage']:.1f}%\n"
+                report += f"  Response Time: {metrics['response_time']:.3f}s\n"
+                report += f"  Error Rate: {metrics['error_rate']:.1%}\n"
+                
+                report += f"\n⏰ Check completed at: {datetime.datetime.fromtimestamp(result['timestamp']).strftime('%Y-%m-%d %H:%M:%S')}\n"
+                
+                # Health assessment
+                cpu_status = "🟢" if metrics['cpu_usage'] < 70 else "🟡" if metrics['cpu_usage'] < 90 else "🔴"
+                memory_status = "🟢" if metrics['memory_usage'] < 70 else "🟡" if metrics['memory_usage'] < 85 else "🔴"
+                disk_status = "🟢" if metrics['disk_usage'] < 80 else "🟡" if metrics['disk_usage'] < 95 else "🔴"
+                
+                report += f"\n🎯 HEALTH ASSESSMENT:\n"
+                report += f"  {cpu_status} CPU: {'Healthy' if metrics['cpu_usage'] < 70 else 'Warning' if metrics['cpu_usage'] < 90 else 'Critical'}\n"
+                report += f"  {memory_status} Memory: {'Healthy' if metrics['memory_usage'] < 70 else 'Warning' if metrics['memory_usage'] < 85 else 'Critical'}\n"
+                report += f"  {disk_status} Disk: {'Healthy' if metrics['disk_usage'] < 80 else 'Warning' if metrics['disk_usage'] < 95 else 'Critical'}\n"
+                
+                return report
+                
+            except Exception as e:
+                self.logger.error(f"Error during forced health check: {e}")
+                return f"Error during health check: {e}"
+        return "Error: SelfHealingModule not available for health checks."
+    
+    def _handle_system_optimize(self, args):
+        """Trigger system optimization and cleanup (requires SelfHealingModule)."""
+        if self.healing_module:
+            try:
+                # Schedule optimization actions
+                context = {"manual_trigger": True}
+                healing_module = self.healing_module
+                
+                results = []
+                
+                # Memory cleanup
+                memory_result = healing_module._clear_memory_cache(context)
+                results.append(f"Memory cleanup: {memory_result.get('message', 'failed')}")
+                
+                # Temp file cleanup
+                temp_result = healing_module._cleanup_temp_files(context)
+                results.append(f"Temp cleanup: {temp_result.get('message', 'failed')}")
+                
+                # Performance optimization
+                perf_result = healing_module._optimize_performance(context)
+                results.append(f"Performance: {perf_result.get('message', 'failed')}")
+                
+                # Log cleanup
+                log_result = healing_module._cleanup_old_logs()
+                results.append(f"Log cleanup: {log_result.get('message', 'failed')}")
+                
+                report = "🔧 SYSTEM OPTIMIZATION COMPLETED\n"
+                report += "=" * 45 + "\n\n"
+                
+                for i, result in enumerate(results, 1):
+                    report += f"{i}. {result}\n"
+                
+                # Get final system state
+                final_check = healing_module.force_health_check()
+                final_metrics = final_check["metrics"]
+                
+                report += f"\n📊 POST-OPTIMIZATION METRICS:\n"
+                report += f"  CPU: {final_metrics['cpu_usage']:.1f}%\n"
+                report += f"  Memory: {final_metrics['memory_usage']:.1f}%\n"
+                report += f"  Disk: {final_metrics['disk_usage']:.1f}%\n"
+                
+                return report
+                
+            except Exception as e:
+                self.logger.error(f"Error during system optimization: {e}")
+                return f"Error during optimization: {e}"
+        return "Error: SelfHealingModule not available for optimization."
+    
+    def _handle_recovery_history(self, args):
+        """Show recovery action history and statistics (requires SelfHealingModule)."""
+        if self.healing_module:
+            try:
+                status = self.healing_module.get_autonomy_status()
+                history = status["action_history"]
+                
+                if not history:
+                    return "📊 No recovery actions have been performed yet."
+                
+                report = "📊 RECOVERY ACTION HISTORY\n"
+                report += "=" * 35 + "\n\n"
+                
+                total_attempts = sum(stats['attempts'] for stats in history.values())
+                total_successes = sum(stats['successes'] for stats in history.values())
+                overall_success_rate = (total_successes / total_attempts) * 100 if total_attempts > 0 else 0
+                
+                report += f"📈 OVERALL STATISTICS:\n"
+                report += f"  Total Actions: {len(history)}\n"
+                report += f"  Total Attempts: {total_attempts}\n"
+                report += f"  Success Rate: {overall_success_rate:.1f}%\n\n"
+                
+                report += f"📋 ACTION DETAILS:\n"
+                
+                # Sort by most recent
+                sorted_history = sorted(history.items(), 
+                                      key=lambda x: x[1].get('last_attempt', 0), 
+                                      reverse=True)
+                
+                for action, stats in sorted_history:
+                    success_rate = (stats['successes'] / stats['attempts']) * 100 if stats['attempts'] > 0 else 0
+                    last_attempt = stats.get('last_attempt', 0)
+                    
+                    if last_attempt > 0:
+                        last_attempt_str = datetime.datetime.fromtimestamp(last_attempt).strftime('%m/%d %H:%M')
+                    else:
+                        last_attempt_str = "Never"
+                    
+                    success_icon = "✅" if success_rate >= 80 else "⚠️" if success_rate >= 50 else "❌"
+                    
+                    report += f"  {success_icon} {action}:\n"
+                    report += f"      Attempts: {stats['attempts']}, Success: {success_rate:.0f}%\n"
+                    report += f"      Last: {last_attempt_str}\n"
+                
+                return report
+                
+            except Exception as e:
+                self.logger.error(f"Error getting recovery history: {e}")
+                return f"Error getting recovery history: {e}"
+        return "Error: SelfHealingModule not available for history."
 
     def process_command(self, command_string):
         self.logger.info(f"Received command string: {command_string!r}")

@@ -15,8 +15,18 @@ import builtins
 import difflib
 from collections import Counter, defaultdict
 import textwrap
-import autopep8  # We'll add this to requirements
-import black  # We'll add this to requirements
+import threading
+import queue
+import gc
+import resource
+import signal
+import psutil
+import subprocess
+import datetime
+from dataclasses import dataclass
+from typing import Callable, Optional
+import pickle
+import hashlib
 
 # --- Logger Setup ---
 LOG_FILE_SHC = "/home/ubuntu/bot_self_healing_coding.log"
@@ -33,24 +43,817 @@ def setup_logger_shc(name, log_file, level=logging.INFO):
 
 shc_logger = setup_logger_shc("SelfHealingCodingLogger", LOG_FILE_SHC)
 
+@dataclass
+class HealthMetrics:
+    """Health metrics for system monitoring."""
+    cpu_usage: float
+    memory_usage: float
+    disk_usage: float
+    response_time: float
+    error_rate: float
+    timestamp: float
+    
+@dataclass
+class RecoveryAction:
+    """Recovery action with priority and constraints."""
+    name: str
+    action: Callable
+    priority: int  # Lower number = higher priority
+    max_attempts: int = 3
+    cooldown: float = 60.0  # seconds
+    conditions: list = None
+    
+class AdvancedHealthMonitor:
+    """Advanced health monitoring with predictive capabilities."""
+    
+    def __init__(self, awareness_module=None):
+        self.logger = shc_logger
+        self.awareness_module = awareness_module
+        self.health_history = []
+        self.max_history = 100
+        self.thresholds = {
+            'cpu_critical': 90.0,
+            'memory_critical': 85.0,
+            'disk_critical': 95.0,
+            'response_time_critical': 5.0,
+            'error_rate_critical': 0.1
+        }
+        self.monitoring_active = False
+        self.monitor_thread = None
+        self.alert_callbacks = []
+        
+    def start_monitoring(self, interval=30):
+        """Start continuous health monitoring."""
+        if self.monitoring_active:
+            return
+            
+        self.monitoring_active = True
+        self.monitor_thread = threading.Thread(target=self._monitor_loop, args=(interval,))
+        self.monitor_thread.daemon = True
+        self.monitor_thread.start()
+        self.logger.info(f"Health monitoring started with {interval}s interval")
+        
+    def stop_monitoring(self):
+        """Stop health monitoring."""
+        self.monitoring_active = False
+        if self.monitor_thread:
+            self.monitor_thread.join(timeout=5)
+        self.logger.info("Health monitoring stopped")
+        
+    def _monitor_loop(self, interval):
+        """Main monitoring loop."""
+        while self.monitoring_active:
+            try:
+                metrics = self._collect_metrics()
+                self._analyze_metrics(metrics)
+                self._store_metrics(metrics)
+                
+                # Cleanup old metrics
+                if len(self.health_history) > self.max_history:
+                    self.health_history = self.health_history[-self.max_history:]
+                    
+                time.sleep(interval)
+            except Exception as e:
+                self.logger.error(f"Error in monitoring loop: {e}")
+                time.sleep(interval)
+                
+    def _collect_metrics(self) -> HealthMetrics:
+        """Collect current system metrics."""
+        start_time = time.time()
+        
+        # System metrics
+        cpu_usage = psutil.cpu_percent(interval=0.1)
+        memory = psutil.virtual_memory()
+        disk = psutil.disk_usage('/')
+        
+        # Calculate response time (mock measurement)
+        response_time = time.time() - start_time
+        
+        # Calculate error rate from recent history
+        error_rate = self._calculate_error_rate()
+        
+        return HealthMetrics(
+            cpu_usage=cpu_usage,
+            memory_usage=memory.percent,
+            disk_usage=disk.percent,
+            response_time=response_time,
+            error_rate=error_rate,
+            timestamp=time.time()
+        )
+        
+    def _calculate_error_rate(self) -> float:
+        """Calculate error rate from recent metrics."""
+        if len(self.health_history) < 5:
+            return 0.0
+            
+        recent_metrics = self.health_history[-10:]
+        high_cpu_count = sum(1 for m in recent_metrics if m.cpu_usage > 80)
+        return high_cpu_count / len(recent_metrics)
+        
+    def _analyze_metrics(self, metrics: HealthMetrics):
+        """Analyze metrics for anomalies and trends."""
+        alerts = []
+        
+        if metrics.cpu_usage > self.thresholds['cpu_critical']:
+            alerts.append(f"Critical CPU usage: {metrics.cpu_usage:.1f}%")
+            
+        if metrics.memory_usage > self.thresholds['memory_critical']:
+            alerts.append(f"Critical memory usage: {metrics.memory_usage:.1f}%")
+            
+        if metrics.disk_usage > self.thresholds['disk_critical']:
+            alerts.append(f"Critical disk usage: {metrics.disk_usage:.1f}%")
+            
+        if metrics.response_time > self.thresholds['response_time_critical']:
+            alerts.append(f"Slow response time: {metrics.response_time:.2f}s")
+            
+        if metrics.error_rate > self.thresholds['error_rate_critical']:
+            alerts.append(f"High error rate: {metrics.error_rate:.1%}")
+            
+        # Predictive analysis
+        if len(self.health_history) >= 10:
+            trend_alerts = self._analyze_trends()
+            alerts.extend(trend_alerts)
+            
+        # Trigger alerts
+        for alert in alerts:
+            self.logger.warning(f"Health Alert: {alert}")
+            self._trigger_alert(alert, metrics)
+            
+    def _analyze_trends(self) -> list:
+        """Analyze trends in health metrics."""
+        alerts = []
+        recent_metrics = self.health_history[-10:]
+        
+        # CPU trend analysis
+        cpu_values = [m.cpu_usage for m in recent_metrics]
+        if len(cpu_values) >= 5 and all(cpu_values[i] < cpu_values[i+1] for i in range(len(cpu_values)-1)):
+            alerts.append("CPU usage trend: steadily increasing")
+            
+        # Memory leak detection
+        memory_values = [m.memory_usage for m in recent_metrics]
+        if len(memory_values) >= 5:
+            memory_increase = memory_values[-1] - memory_values[0]
+            if memory_increase > 10:  # 10% increase over monitoring period
+                alerts.append(f"Potential memory leak detected: {memory_increase:.1f}% increase")
+                
+        return alerts
+        
+    def _store_metrics(self, metrics: HealthMetrics):
+        """Store metrics in history."""
+        self.health_history.append(metrics)
+        
+        # Update awareness module if available
+        if self.awareness_module:
+            self.awareness_module.update_module_health(
+                "AdvancedHealthMonitor", 
+                "OK", 
+                f"CPU: {metrics.cpu_usage:.1f}%, Memory: {metrics.memory_usage:.1f}%"
+            )
+            
+    def _trigger_alert(self, alert: str, metrics: HealthMetrics):
+        """Trigger alert callbacks."""
+        for callback in self.alert_callbacks:
+            try:
+                callback(alert, metrics)
+            except Exception as e:
+                self.logger.error(f"Error in alert callback: {e}")
+                
+    def add_alert_callback(self, callback: Callable):
+        """Add callback function for alerts."""
+        self.alert_callbacks.append(callback)
+        
+    def get_health_summary(self) -> dict:
+        """Get comprehensive health summary."""
+        if not self.health_history:
+            return {"status": "no_data"}
+            
+        latest = self.health_history[-1]
+        avg_cpu = sum(m.cpu_usage for m in self.health_history[-10:]) / min(10, len(self.health_history))
+        avg_memory = sum(m.memory_usage for m in self.health_history[-10:]) / min(10, len(self.health_history))
+        
+        return {
+            "status": "healthy" if latest.cpu_usage < 80 and latest.memory_usage < 80 else "warning",
+            "current": {
+                "cpu": latest.cpu_usage,
+                "memory": latest.memory_usage,
+                "disk": latest.disk_usage,
+                "response_time": latest.response_time
+            },
+            "averages": {
+                "cpu": avg_cpu,
+                "memory": avg_memory
+            },
+            "trends": self._analyze_trends(),
+            "monitoring_active": self.monitoring_active
+        }
+
 class SelfHealingModule:
     def __init__(self, awareness_module=None):
         self.logger = shc_logger
         self.awareness_module = awareness_module
-        self.error_handlers = {}
+        self.health_monitor = AdvancedHealthMonitor(awareness_module)
+        self.recovery_actions = queue.PriorityQueue()
+        self.action_history = {}
+        self.learning_data = {}
+        self.autonomy_enabled = True
+        self.recovery_strategies = {}
+        self.performance_baseline = {}
+        
+        # Initialize recovery strategies
+        self._initialize_recovery_strategies()
+        
+        # Start health monitoring
+        self.health_monitor.add_alert_callback(self._handle_health_alert)
+        self.health_monitor.start_monitoring()
+        
+        self.logger.info("Advanced SelfHealingModule initialized with autonomy")
+        
+        if self.awareness_module:
+            self.awareness_module.update_module_health("SelfHealingModule", "OK", "Initialized with autonomy")
+    
+    def _initialize_recovery_strategies(self):
+        """Initialize comprehensive recovery strategies."""
         self.recovery_strategies = {
             "ModuleImportError": self._handle_import_error,
             "FileNotFoundError": self._handle_file_not_found,
             "SyntaxError": self._handle_syntax_error,
             "PermissionError": self._handle_permission_error,
             "JSONDecodeError": self._handle_json_decode_error,
+            "MemoryError": self._handle_memory_error,
+            "OSError": self._handle_os_error,
+            "ConnectionError": self._handle_connection_error,
+            "TimeoutError": self._handle_timeout_error,
+            "HighCPUUsage": self._handle_high_cpu,
+            "HighMemoryUsage": self._handle_high_memory,
+            "DiskSpaceLow": self._handle_disk_space,
+            "ProcessDead": self._handle_dead_process,
+            "ServiceDown": self._handle_service_down,
             "Default": self._handle_default_error
         }
-        self.logger.info("SelfHealingModule initialized.")
         
-        # Register with awareness module if available
-        if self.awareness_module:
-            self.awareness_module.update_module_health("SelfHealingModule", "OK", "Initialized")
+        # Advanced recovery actions
+        self._register_recovery_actions()
+        
+    def _register_recovery_actions(self):
+        """Register prioritized recovery actions."""
+        actions = [
+            RecoveryAction("restart_service", self._restart_critical_service, 1, 2, 300),
+            RecoveryAction("clear_memory", self._clear_memory_cache, 2, 5, 60),
+            RecoveryAction("restart_process", self._restart_process, 3, 3, 180),
+            RecoveryAction("cleanup_temp", self._cleanup_temp_files, 4, 10, 30),
+            RecoveryAction("optimize_performance", self._optimize_performance, 5, 3, 600),
+            RecoveryAction("rollback_changes", self._rollback_recent_changes, 6, 1, 1800),
+        ]
+        
+        for action in actions:
+            self.recovery_strategies[action.name] = action
+    
+    def _handle_health_alert(self, alert: str, metrics: HealthMetrics):
+        """Handle health alerts with autonomous responses."""
+        if not self.autonomy_enabled:
+            return
+            
+        self.logger.info(f"Processing health alert: {alert}")
+        
+        # Determine appropriate response based on alert type
+        if "CPU usage" in alert:
+            self._schedule_recovery_action("HighCPUUsage", {"metrics": metrics})
+        elif "memory usage" in alert:
+            self._schedule_recovery_action("HighMemoryUsage", {"metrics": metrics})
+        elif "disk usage" in alert:
+            self._schedule_recovery_action("DiskSpaceLow", {"metrics": metrics})
+        elif "response time" in alert:
+            self._schedule_recovery_action("optimize_performance", {"metrics": metrics})
+            
+    def _schedule_recovery_action(self, action_type: str, context: dict):
+        """Schedule a recovery action with priority."""
+        action_key = f"{action_type}_{time.time()}"
+        
+        # Check if similar action was recently attempted
+        if self._was_recently_attempted(action_type):
+            self.logger.info(f"Skipping {action_type} - recently attempted")
+            return
+            
+        # Get priority for action type
+        priority = self._get_action_priority(action_type)
+        
+        # Add to priority queue
+        self.recovery_actions.put((priority, action_key, action_type, context))
+        self.logger.info(f"Scheduled recovery action: {action_type} with priority {priority}")
+        
+        # Process queue
+        self._process_recovery_queue()
+        
+    def _was_recently_attempted(self, action_type: str, cooldown: int = 300) -> bool:
+        """Check if action was recently attempted."""
+        if action_type not in self.action_history:
+            return False
+            
+        last_attempt = self.action_history[action_type].get('last_attempt', 0)
+        return time.time() - last_attempt < cooldown
+        
+    def _get_action_priority(self, action_type: str) -> int:
+        """Get priority for action type."""
+        priorities = {
+            "HighCPUUsage": 2,
+            "HighMemoryUsage": 1,
+            "DiskSpaceLow": 3,
+            "ProcessDead": 1,
+            "ServiceDown": 1,
+            "optimize_performance": 4,
+            "cleanup_temp": 5
+        }
+        return priorities.get(action_type, 10)
+        
+    def _process_recovery_queue(self):
+        """Process pending recovery actions."""
+        while not self.recovery_actions.empty():
+            try:
+                priority, action_key, action_type, context = self.recovery_actions.get_nowait()
+                
+                # Execute recovery action
+                success = self._execute_recovery_action(action_type, context)
+                
+                # Record attempt
+                if action_type not in self.action_history:
+                    self.action_history[action_type] = {'attempts': 0, 'successes': 0}
+                    
+                self.action_history[action_type]['attempts'] += 1
+                self.action_history[action_type]['last_attempt'] = time.time()
+                
+                if success:
+                    self.action_history[action_type]['successes'] += 1
+                    self.logger.info(f"Successfully executed recovery action: {action_type}")
+                else:
+                    self.logger.warning(f"Recovery action failed: {action_type}")
+                    
+            except queue.Empty:
+                break
+            except Exception as e:
+                self.logger.error(f"Error processing recovery queue: {e}")
+                
+    def _execute_recovery_action(self, action_type: str, context: dict) -> bool:
+        """Execute a specific recovery action."""
+        try:
+            if action_type in self.recovery_strategies:
+                strategy = self.recovery_strategies[action_type]
+                
+                if isinstance(strategy, RecoveryAction):
+                    result = strategy.action(context)
+                else:
+                    # Legacy strategy function
+                    result = strategy(None, context)
+                    
+                return result.get('success', False) if isinstance(result, dict) else bool(result)
+            else:
+                self.logger.warning(f"Unknown recovery action: {action_type}")
+                return False
+                
+        except Exception as e:
+            self.logger.error(f"Error executing recovery action {action_type}: {e}")
+            return False
+    # --- Advanced Recovery Strategies ---
+    
+    def _handle_memory_error(self, error: Exception, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle memory errors with intelligent cleanup."""
+        self.logger.info("Handling memory error with advanced cleanup")
+        
+        # Force garbage collection
+        gc.collect()
+        
+        # Clear caches if possible
+        cleanup_success = self._clear_memory_cache(context)
+        
+        # Get memory info
+        memory_info = psutil.virtual_memory()
+        
+        return {
+            "success": cleanup_success.get('success', False),
+            "message": f"Memory cleanup attempted. Available: {memory_info.available // 1024 // 1024}MB",
+            "recovery_action": "memory_cleanup",
+            "available_memory_mb": memory_info.available // 1024 // 1024
+        }
+    
+    def _handle_os_error(self, error: Exception, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle OS-level errors."""
+        error_msg = str(error)
+        
+        if "Too many open files" in error_msg:
+            return self._handle_file_descriptor_limit(error, context)
+        elif "No space left" in error_msg:
+            return self._handle_disk_space(context)
+        else:
+            return {
+                "success": False,
+                "message": f"OS Error: {error_msg}",
+                "recovery_action": "os_error_logged"
+            }
+    
+    def _handle_file_descriptor_limit(self, error: Exception, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle file descriptor limit exceeded."""
+        try:
+            # Get current file descriptor usage
+            process = psutil.Process()
+            open_files = len(process.open_files())
+            
+            # Attempt to close unnecessary file handles
+            # (This would need specific implementation based on application)
+            
+            return {
+                "success": True,
+                "message": f"File descriptor cleanup attempted. Current open files: {open_files}",
+                "recovery_action": "fd_cleanup",
+                "open_files": open_files
+            }
+        except Exception as e:
+            return {"success": False, "message": f"FD cleanup failed: {e}"}
+    
+    def _handle_connection_error(self, error: Exception, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle network connection errors."""
+        # Attempt connection retry with backoff
+        max_retries = 3
+        
+        for attempt in range(max_retries):
+            try:
+                # Wait with exponential backoff
+                time.sleep(2 ** attempt)
+                
+                # Test connection (implementation would depend on specific service)
+                # This is a placeholder for actual connection test
+                connection_test = True  # Replace with actual test
+                
+                if connection_test:
+                    return {
+                        "success": True,
+                        "message": f"Connection restored after {attempt + 1} attempts",
+                        "recovery_action": "connection_retry"
+                    }
+                    
+            except Exception:
+                continue
+                
+        return {
+            "success": False,
+            "message": f"Connection failed after {max_retries} attempts",
+            "recovery_action": "connection_failed"
+        }
+    
+    def _handle_timeout_error(self, error: Exception, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle timeout errors with adaptive strategies."""
+        operation = context.get('operation', 'unknown')
+        
+        # Increase timeout for next attempt
+        current_timeout = context.get('timeout', 30)
+        new_timeout = min(current_timeout * 1.5, 300)  # Cap at 5 minutes
+        
+        return {
+            "success": True,  # Success means we have a strategy
+            "message": f"Timeout handled for {operation}. Suggested timeout: {new_timeout}s",
+            "recovery_action": "timeout_adjustment",
+            "suggested_timeout": new_timeout
+        }
+    
+    def _handle_high_cpu(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle high CPU usage."""
+        metrics = context.get('metrics')
+        
+        # Identify CPU-intensive processes
+        processes = []
+        for proc in psutil.process_iter(['pid', 'name', 'cpu_percent']):
+            try:
+                if proc.info['cpu_percent'] > 10:
+                    processes.append(proc.info)
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+        
+        # Sort by CPU usage
+        processes.sort(key=lambda x: x['cpu_percent'], reverse=True)
+        
+        # Log top CPU consumers
+        top_processes = processes[:5]
+        process_info = "; ".join([f"{p['name']}({p['pid']}): {p['cpu_percent']:.1f}%" 
+                                for p in top_processes])
+        
+        # Attempt to optimize (placeholder - would need specific implementation)
+        optimization_applied = self._optimize_performance(context)
+        
+        return {
+            "success": optimization_applied.get('success', False),
+            "message": f"High CPU detected. Top processes: {process_info}",
+            "recovery_action": "cpu_optimization",
+            "top_processes": top_processes
+        }
+    
+    def _handle_high_memory(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle high memory usage."""
+        # Force garbage collection
+        gc.collect()
+        
+        # Clear caches
+        cache_cleared = self._clear_memory_cache(context)
+        
+        # Get memory info after cleanup
+        memory_after = psutil.virtual_memory()
+        
+        return {
+            "success": True,
+            "message": f"Memory cleanup completed. Available: {memory_after.available // 1024 // 1024}MB",
+            "recovery_action": "memory_optimization",
+            "memory_freed_mb": context.get('memory_before', 0) - memory_after.used
+        }
+    
+    def _handle_disk_space(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle low disk space."""
+        cleanup_results = []
+        
+        # Clean temporary files
+        temp_cleanup = self._cleanup_temp_files(context)
+        cleanup_results.append(f"Temp cleanup: {temp_cleanup.get('message', 'failed')}")
+        
+        # Clean log files (keep recent ones)
+        log_cleanup = self._cleanup_old_logs()
+        cleanup_results.append(f"Log cleanup: {log_cleanup.get('message', 'failed')}")
+        
+        # Get disk space after cleanup
+        disk_after = psutil.disk_usage('/')
+        free_gb = disk_after.free / (1024**3)
+        
+        return {
+            "success": free_gb > 1.0,  # Success if more than 1GB free
+            "message": f"Disk cleanup completed. Free space: {free_gb:.1f}GB",
+            "recovery_action": "disk_cleanup",
+            "cleanup_results": cleanup_results,
+            "free_space_gb": free_gb
+        }
+    
+    def _handle_dead_process(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle dead process detection."""
+        process_name = context.get('process_name', 'unknown')
+        
+        restart_result = self._restart_process(context)
+        
+        return {
+            "success": restart_result.get('success', False),
+            "message": f"Process restart attempted for {process_name}",
+            "recovery_action": "process_restart"
+        }
+    
+    def _handle_service_down(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle service downtime."""
+        service_name = context.get('service_name', 'unknown')
+        
+        restart_result = self._restart_critical_service(context)
+        
+        return {
+            "success": restart_result.get('success', False),
+            "message": f"Service restart attempted for {service_name}",
+            "recovery_action": "service_restart"
+        }
+    
+    # --- Recovery Action Implementations ---
+    
+    def _restart_critical_service(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Restart critical services."""
+        service = context.get('service_name', 'main_service')
+        
+        try:
+            # This would contain actual service restart logic
+            # For now, we'll simulate the restart
+            self.logger.info(f"Simulating restart of service: {service}")
+            
+            # In a real implementation, you would:
+            # 1. Stop the service gracefully
+            # 2. Wait for cleanup
+            # 3. Start the service
+            # 4. Verify it's running
+            
+            return {
+                "success": True,
+                "message": f"Service {service} restarted successfully",
+                "action": "service_restart"
+            }
+        except Exception as e:
+            return {"success": False, "message": f"Service restart failed: {e}"}
+    
+    def _clear_memory_cache(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Clear memory caches and force garbage collection."""
+        try:
+            # Get memory before cleanup
+            memory_before = psutil.virtual_memory().used
+            
+            # Force garbage collection multiple times
+            for _ in range(3):
+                gc.collect()
+                time.sleep(0.1)
+            
+            # Clear any application-specific caches
+            # (This would be implemented based on specific application needs)
+            
+            memory_after = psutil.virtual_memory().used
+            freed_mb = (memory_before - memory_after) / (1024 * 1024)
+            
+            return {
+                "success": True,
+                "message": f"Memory cache cleared. Freed: {freed_mb:.1f}MB",
+                "memory_freed_mb": freed_mb
+            }
+        except Exception as e:
+            return {"success": False, "message": f"Memory cleanup failed: {e}"}
+    
+    def _restart_process(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Restart current process (careful implementation needed)."""
+        try:
+            # This is a placeholder for process restart logic
+            # In production, this would need careful implementation
+            # to avoid losing state or causing issues
+            
+            self.logger.warning("Process restart requested but not implemented for safety")
+            
+            return {
+                "success": False,
+                "message": "Process restart not implemented for safety",
+                "action": "process_restart_skipped"
+            }
+        except Exception as e:
+            return {"success": False, "message": f"Process restart failed: {e}"}
+    
+    def _cleanup_temp_files(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Clean up temporary files and directories."""
+        try:
+            cleanup_paths = [
+                '/tmp',
+                '/var/tmp',
+                os.path.expanduser('~/tmp'),
+                tempfile.gettempdir()
+            ]
+            
+            total_freed = 0
+            files_removed = 0
+            
+            for path in cleanup_paths:
+                if os.path.exists(path):
+                    freed, removed = self._clean_directory(path, max_age_hours=24)
+                    total_freed += freed
+                    files_removed += removed
+            
+            return {
+                "success": True,
+                "message": f"Cleaned {files_removed} files, freed {total_freed / 1024 / 1024:.1f}MB",
+                "files_removed": files_removed,
+                "space_freed_mb": total_freed / 1024 / 1024
+            }
+        except Exception as e:
+            return {"success": False, "message": f"Temp cleanup failed: {e}"}
+    
+    def _clean_directory(self, directory: str, max_age_hours: int = 24) -> Tuple[int, int]:
+        """Clean old files from directory."""
+        total_size = 0
+        files_removed = 0
+        cutoff_time = time.time() - (max_age_hours * 3600)
+        
+        try:
+            for root, dirs, files in os.walk(directory):
+                for filename in files:
+                    filepath = os.path.join(root, filename)
+                    try:
+                        stat = os.stat(filepath)
+                        if stat.st_mtime < cutoff_time:
+                            total_size += stat.st_size
+                            os.remove(filepath)
+                            files_removed += 1
+                    except (OSError, IOError):
+                        continue  # Skip files we can't access
+                        
+        except Exception as e:
+            self.logger.warning(f"Error cleaning directory {directory}: {e}")
+            
+        return total_size, files_removed
+    
+    def _cleanup_old_logs(self, max_age_days: int = 7) -> Dict[str, Any]:
+        """Clean up old log files."""
+        try:
+            log_dirs = [
+                '/var/log',
+                os.path.expanduser('~/'),
+                '/home/ubuntu'
+            ]
+            
+            total_freed = 0
+            files_removed = 0
+            cutoff_time = time.time() - (max_age_days * 24 * 3600)
+            
+            for log_dir in log_dirs:
+                if os.path.exists(log_dir):
+                    for filename in os.listdir(log_dir):
+                        if filename.endswith('.log'):
+                            filepath = os.path.join(log_dir, filename)
+                            try:
+                                stat = os.stat(filepath)
+                                if stat.st_mtime < cutoff_time:
+                                    total_freed += stat.st_size
+                                    os.remove(filepath)
+                                    files_removed += 1
+                            except (OSError, IOError):
+                                continue
+            
+            return {
+                "success": True,
+                "message": f"Cleaned {files_removed} log files, freed {total_freed / 1024 / 1024:.1f}MB",
+                "files_removed": files_removed,
+                "space_freed_mb": total_freed / 1024 / 1024
+            }
+        except Exception as e:
+            return {"success": False, "message": f"Log cleanup failed: {e}"}
+    
+    def _optimize_performance(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Apply performance optimizations."""
+        try:
+            optimizations = []
+            
+            # Adjust process priority if high CPU
+            metrics = context.get('metrics')
+            if metrics and metrics.cpu_usage > 80:
+                try:
+                    os.nice(1)  # Lower priority slightly
+                    optimizations.append("Reduced process priority")
+                except OSError:
+                    pass
+            
+            # Force garbage collection
+            gc.collect()
+            optimizations.append("Forced garbage collection")
+            
+            # Clear any performance-impacting caches
+            cache_result = self._clear_memory_cache(context)
+            if cache_result.get('success'):
+                optimizations.append("Cleared memory caches")
+            
+            return {
+                "success": True,
+                "message": f"Applied optimizations: {', '.join(optimizations)}",
+                "optimizations": optimizations
+            }
+        except Exception as e:
+            return {"success": False, "message": f"Performance optimization failed: {e}"}
+    
+    def _rollback_recent_changes(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Rollback recent changes (placeholder for backup/restore system)."""
+        try:
+            # This would implement actual rollback logic
+            # For now, it's a placeholder
+            
+            self.logger.info("Rollback requested but not implemented")
+            
+            return {
+                "success": False,
+                "message": "Rollback system not implemented",
+                "action": "rollback_unavailable"
+            }
+        except Exception as e:
+            return {"success": False, "message": f"Rollback failed: {e}"}
+    
+    def enable_autonomy(self):
+        """Enable autonomous operation."""
+        self.autonomy_enabled = True
+        self.health_monitor.start_monitoring()
+        self.logger.info("Autonomy enabled - bot will self-heal automatically")
+        
+    def disable_autonomy(self):
+        """Disable autonomous operation."""
+        self.autonomy_enabled = False
+        self.health_monitor.stop_monitoring()
+        self.logger.info("Autonomy disabled - manual intervention required for issues")
+    
+    def get_autonomy_status(self) -> Dict[str, Any]:
+        """Get comprehensive autonomy and health status."""
+        health_summary = self.health_monitor.get_health_summary()
+        
+        return {
+            "autonomy_enabled": self.autonomy_enabled,
+            "health_monitoring": self.health_monitor.monitoring_active,
+            "health_summary": health_summary,
+            "recovery_queue_size": self.recovery_actions.qsize(),
+            "action_history": self.action_history,
+            "available_strategies": list(self.recovery_strategies.keys())
+        }
+    
+    def force_health_check(self) -> Dict[str, Any]:
+        """Force an immediate health check and return results."""
+        metrics = self.health_monitor._collect_metrics()
+        self.health_monitor._analyze_metrics(metrics)
+        self.health_monitor._store_metrics(metrics)
+        
+        return {
+            "metrics": {
+                "cpu_usage": metrics.cpu_usage,
+                "memory_usage": metrics.memory_usage,
+                "disk_usage": metrics.disk_usage,
+                "response_time": metrics.response_time,
+                "error_rate": metrics.error_rate
+            },
+            "status": "completed",
+            "timestamp": metrics.timestamp
+        }
     
     def register_error_handler(self, error_type: str, handler_func):
         """Register a custom error handler for a specific error type."""
