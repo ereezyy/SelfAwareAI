@@ -15,11 +15,6 @@ import logging
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-app = Flask(__name__)
-CORS(app)
-
 # Global process tracking
 running_processes = {}
 
@@ -44,11 +39,6 @@ def get_backend_status():
                 'running': is_service_running('websocket_server.py'),
                 'pid': get_service_pid('websocket_server.py'),
                 'status': 'running' if is_service_running('websocket_server.py') else 'stopped'
-            },
-            'bot_management': {
-                'running': is_service_running('bot_management_system.py'),
-                'pid': get_service_pid('bot_management_system.py'),
-                'status': 'running' if is_service_running('bot_management_system.py') else 'stopped'
             }
         }
         
