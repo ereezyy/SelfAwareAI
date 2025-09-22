@@ -24,6 +24,16 @@ CORS(app)
 # Global process tracking
 running_processes = {}
 
+@app.route('/api/health')
+def health_check():
+    """Health check endpoint"""
+    return jsonify({
+        'success': True,
+        'status': 'healthy',
+        'timestamp': psutil.boot_time(),
+        'api_server': 'running'
+    })
+
 @app.route('/api/backend/status')
 def get_backend_status():
     """Get status of all backend services"""
