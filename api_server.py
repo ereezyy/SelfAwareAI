@@ -36,6 +36,8 @@ try:
     BOT_MODULES_AVAILABLE = True
     print("✅ All bot modules imported successfully")
 except ImportError as e:
+    logger.error(f"Failed to import bot modules: {e}")
+    BOT_MODULES_AVAILABLE = False
 
 # Flask app configuration
 app = Flask(__name__)
@@ -809,7 +811,7 @@ def _execute_bot_command(command, args):
             for arg in args:
                 arg_str = str(arg)
                 if ' ' in arg_str or '"' in arg_str or "'" in arg_str:
-                    escaped_args.append(f'"{arg_str.replace("\"", "\\\"")}"')
+                    escaped_args.append(f"\"{arg_str.replace('\"', '\\\"')}\"")
                 else:
                     escaped_args.append(arg_str)
             command_str += ' ' + ' '.join(escaped_args)
