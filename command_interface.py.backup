@@ -409,11 +409,6 @@ class CommandInterface:
         script_path = args[0]
         script_args = args[1:]
         abs_script_path = os.path.abspath(script_path)
-        
-        # Security check - only allow scripts in current directory tree
-        allowed_root = os.path.abspath(os.getcwd())
-        if not abs_script_path.startswith(allowed_root):
-            return f"Error: Script must be in current directory tree: {abs_script_path}"
 
         if not os.path.exists(abs_script_path):
             return f"Error: Script file {abs_script_path} not found."
@@ -745,7 +740,7 @@ if __name__ == "__main__":
             def handle_error(self, error, context): ci_logger.warning(f"MOCK_HEALING: {error}"); return {}
         class MockCodingModule:
             def analyze_code_structure(self, fp): 
-                if fp == "os.path.expanduser("~") + os.seperror_trigger.py":
+                if fp == "/home/ubuntu/error_trigger.py":
                     return {"error": "Simulated analysis error from mock"}
                 return {"mock_analysis": fp}
             def apply_simple_code_patch(self, fp, o, n): return True
@@ -772,23 +767,23 @@ if __name__ == "__main__":
 
     print("Command Interface Test with integrated modules. Type \"exit\" or \"quit\" to stop.")
     
-    dummy_script_path = "os.path.expanduser("~") + os.sepdummy_test_script_ci.py"
+    dummy_script_path = "/home/ubuntu/dummy_test_script_ci.py"
     with open(dummy_script_path, "w") as f:
         f.write("import sys\nprint(\"Hello from CI dummy script!\")\nprint(f\"Script arguments: {sys.argv[1:]}\")\nsys.exit(0)\n")
 
-    dummy_config_path = "os.path.expanduser("~") + os.sepdummy_config_ci.json"
+    dummy_config_path = "/home/ubuntu/dummy_config_ci.json"
     with open(dummy_config_path, "w") as f:
         json.dump({"setting1": "value1", "nested": {"key": "original"}}, f, indent=2)
 
-    error_trigger_path = "os.path.expanduser("~") + os.seperror_trigger.py"
+    error_trigger_path = "/home/ubuntu/error_trigger.py"
     with open(error_trigger_path, "w") as f:
         f.write("# This file is used to trigger a simulated error in analyze_code")
 
     test_commands = [
         "help",
         "status",
-        "create_file os.path.expanduser("~") + os.septestfile_ci.txt \"Initial content for CI test\"",
-        "read_file os.path.expanduser("~") + os.septestfile_ci.txt",
+        "create_file /home/ubuntu/testfile_ci.txt \"Initial content for CI test\"",
+        "read_file /home/ubuntu/testfile_ci.txt",
         "humanize_text \"This is a simple sentence that I want to make sound more natural.\"",
         "detect_ai_text \"This text was definitely written by a human being, I swear it.\"",
         "detect_ai_text \"Leveraging synergistic paradigms, we aim to optimize bleeding-edge infrastructures.\"",
@@ -809,7 +804,7 @@ if __name__ == "__main__":
     print(f"Log file for AI Detector: {ai_detector_module.logger.handlers[0].baseFilename if hasattr(ai_detector_module, 'logger') and ai_detector_module.logger.handlers else 'N/A or Mock'}")
 
     # Cleanup
-    if os.path.exists("os.path.expanduser("~") + os.septestfile_ci.txt"): os.remove("os.path.expanduser("~") + os.septestfile_ci.txt")
+    if os.path.exists("/home/ubuntu/testfile_ci.txt"): os.remove("/home/ubuntu/testfile_ci.txt")
     if os.path.exists(dummy_script_path): os.remove(dummy_script_path)
     if os.path.exists(dummy_config_path): os.remove(dummy_config_path)
     if os.path.exists(error_trigger_path): os.remove(error_trigger_path)

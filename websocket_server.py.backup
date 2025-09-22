@@ -5,12 +5,7 @@ Handles real-time updates between web interface and bot management system
 """
 
 import asyncio
-try:
-    import websockets
-except ImportError:
-    print("Error: websockets module not installed. Run: pip install websockets")
-    import sys
-    sys.exit(1)
+import websockets
 import json
 import logging
 import time

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.11
 # bot_launcher.py - Production launcher for the Self-Aware Bot
 
 import os

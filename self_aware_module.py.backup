@@ -37,11 +37,7 @@ class SelfAwareModule:
         try:
             cpu_usage = psutil.cpu_percent(interval=0.1)
             memory_info = psutil.virtual_memory()
-            # Cross-platform disk usage
-            if os.name == 'nt':  # Windows
-                disk_usage = psutil.disk_usage("C:\\")
-            else:  # Unix-like systems
-                disk_usage = psutil.disk_usage("/")
+            disk_usage = psutil.disk_usage("/")
             
             metrics = {
                 "cpu_usage_percent": cpu_usage,
